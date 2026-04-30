@@ -1,21 +1,12 @@
+import 'dart:convert';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 class WebRTCService {
   static final Map<String, dynamic> configuration = {
     'iceServers': [
-      // STUN - Google (gratis)
+      {'urls': ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302']},
       {
-        'urls': [
-          'stun:stun.l.google.com:19302',
-          'stun:stun1.l.google.com:19302',
-        ],
-      },
-      // TURN - OpenRelay (gratis, sin registro)
-      {
-        'urls': [
-          'turn:openrelay.metered.ca:80',
-          'turn:openrelay.metered.ca:443',
-        ],
+        'urls': ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443'],
         'username': 'openrelayproject',
         'credential': 'openrelayproject',
       },
@@ -40,14 +31,7 @@ class WebRTCService {
 
     _localStream = await navigator.mediaDevices.getUserMedia({
       'audio': true,
-      'video': isVideo
-          ? {
-              'facingMode': 'user',
-              'width': {'ideal': 640},
-              'height': {'ideal': 480},
-              'frameRate': {'ideal': 30},
-            }
-          : false,
+      'video': isVideo ? {'facingMode': 'user', 'width': {'ideal': 640}, 'height': {'ideal': 480}, 'frameRate': {'ideal': 30}} : false,
     });
 
     _localRenderer!.srcObject = _localStream;
@@ -65,26 +49,13 @@ class WebRTCService {
 
     RTCSessionDescription offer = await _peerConnection!.createOffer();
     await _peerConnection!.setLocalDescription(offer);
+    // Aquí enviarías el offer al otro usuario via WebSocket
   }
 
-  Future<void> answerCall(dynamic remoteOffer) async {
-    if (remoteOffer is RTCSessionDescription) {
-      await _peerConnection?.setRemoteDescription(remoteOffer);
-      RTCSessionDescription answer = await _peerConnection!.createAnswer();
-      await _peerConnection!.setLocalDescription(answer);
-    }
-  }
-
-  void toggleMic() {
-    _localStream?.getAudioTracks().forEach((track) => track.enabled = !track.enabled);
-  }
-
+  void toggleMic() => _localStream?.getAudioTracks().forEach((track) => track.enabled = !track.enabled);
   bool get isMicEnabled => _localStream?.getAudioTracks().any((t) => t.enabled) ?? false;
 
-  void toggleCamera() {
-    _localStream?.getVideoTracks().forEach((track) => track.enabled = !track.enabled);
-  }
-
+  void toggleCamera() => _localStream?.getVideoTracks().forEach((track) => track.enabled = !track.enabled);
   bool get isCameraEnabled => _localStream?.getVideoTracks().any((t) => t.enabled) ?? false;
 
   Future<void> switchCamera() async {
