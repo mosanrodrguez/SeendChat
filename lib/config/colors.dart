@@ -28,5 +28,6 @@ class SeendColors {
   static const checkBlue = Color(0xFF2C6BED);
   static const checkGray = Color(0xFFBDBDBD);
   static const error = Color(0xFFE53935);
+  static const border = Color(0xFFE0E0E0);
   static const connecting = Color(0xFFFFC107);
 }
