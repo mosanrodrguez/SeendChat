@@ -95,7 +95,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             ),
           ),
           if (_showEmoji)
-            EmojiPicker(
+            emoji.EmojiPickerWidget(
               onEmojiSelected: (emoji) => _msgCtrl.text += emoji,
               onClose: () => setState(() => _showEmoji = false),
             ),

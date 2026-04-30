@@ -1,147 +1,190 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import '../config/colors.dart';
 
-class EmojiPicker extends StatefulWidget {
+class EmojiPickerWidget extends StatefulWidget {
   final Function(String) onEmojiSelected;
   final VoidCallback onClose;
+  final Function(String)? onStickerSelected;
 
-  const EmojiPicker({super.key, required this.onEmojiSelected, required this.onClose});
+  const EmojiPickerWidget({
+    super.key,
+    required this.onEmojiSelected,
+    required this.onClose,
+    this.onStickerSelected,
+  });
 
   @override
-  State<EmojiPicker> createState() => _EmojiPickerState();
+  State<EmojiPickerWidget> createState() => _EmojiPickerWidgetState();
 }
 
-class _EmojiPickerState extends State<EmojiPicker> with SingleTickerProviderStateMixin {
+class _EmojiPickerWidgetState extends State<EmojiPickerWidget> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  bool _showStickerCreator = false;
-
-  static const List<String> _emojis = [
-    '😀', '😃', '😄', '😁', '😅', '🤣', '😂', '🙂', '😊', '😇',
-    '😍', '🤩', '😎', '😢', '😡', '👍', '🙏', '🎉', '🔥', '💯',
-    '❤️', '💙', '💚', '💛', '🧡', '💜', '🖤', '🤍', '🤎', '💔',
-    '😋', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔', '😐',
-    '🐱', '🐶', '🦊', '🐸', '🦁', '🐵', '🦄', '🐝', '🌸', '🌈',
-    '🍕', '🍔', '🌮', '🍩', '🎂', '☕', '🍺', '🍷', '🎸', '⚽',
-  ];
-
-  // Stickers predefinidos (emojis grandes)
-  static const List<String> _stickers = [
-    '😍', '🤩', '🔥', '💯', '❤️', '🎉',
-    '😂', '😢', '👍', '🙏', '💪', '🌟',
-  ];
-
+  int _selectedTab = 0;
   final List<String> _customStickers = [];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 2, vsync: this, initialIndex: 0);
+    _tabController.addListener(() => setState(() => _selectedTab = _tabController.index));
   }
 
-  void _addCustomSticker() {
-    setState(() => _showStickerCreator = true);
+  Future<void> _createCustomSticker() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85, maxWidth: 512, maxHeight: 512);
+    if (picked != null) {
+      setState(() => _customStickers.add(picked.path));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sticker creado'), backgroundColor: SeendColors.primary, duration: Duration(seconds: 1)),
+      );
+    }
   }
 
-  void _createStickerFromEmoji(String emoji) {
-    setState(() {
-      _customStickers.add(emoji);
-      _showStickerCreator = false;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sticker $emoji creado'), backgroundColor: SeendColors.primary, duration: const Duration(seconds: 1)));
+  void _removeCustomSticker(int index) {
+    setState(() => _customStickers.removeAt(index));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Sticker eliminado'), backgroundColor: SeendColors.error, duration: Duration(seconds: 1)),
+    );
+  }
+
+  void _selectSticker(String path) {
+    widget.onStickerSelected?.call(path);
+    widget.onEmojiSelected('🖼️');
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF1A1A1A) : Colors.white;
+    final iconColor = isDark ? Colors.white70 : SeendColors.textSecondary;
+
     return Container(
-      height: 300,
-      decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, border: Border(top: BorderSide(color: SeendColors.border, width: 0.5))),
+      height: 340,
+      decoration: BoxDecoration(
+        color: bgColor,
+        border: Border(top: BorderSide(color: SeendColors.border.withOpacity(0.3), width: 0.5)),
+      ),
       child: Column(children: [
-        // Tabs
+        // Tabs superiores (Emojis, Stickers)
         Container(
           height: 44,
-          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: SeendColors.border, width: 0.5))),
-          child: Row(children: [
-            const SizedBox(width: 12),
-            _buildTab('Emojis', 0),
-            const SizedBox(width: 20),
-            _buildTab('Stickers', 1),
-            const Spacer(),
-            IconButton(icon: const Icon(Icons.close, size: 18, color: SeendColors.textSecondary), onPressed: widget.onClose, padding: EdgeInsets.zero),
-            const SizedBox(width: 8),
-          ]),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: bgColor,
+            border: Border(bottom: BorderSide(color: SeendColors.border.withOpacity(0.2), width: 0.5)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildTabIcon(Icons.emoji_emotions, 'Emojis', 0, iconColor),
+              const SizedBox(width: 40),
+              _buildTabIcon(Icons.star, 'Stickers', 1, iconColor),
+            ],
+          ),
         ),
         // Contenido
         Expanded(
-          child: _showStickerCreator
-              ? _buildStickerCreator()
-              : TabBarView(controller: _tabController, children: [
-                  _buildEmojiGrid(),
-                  _buildStickerGrid(),
-                ]),
+          child: TabBarView(controller: _tabController, children: [
+            // Tab 0: Emoji Picker Flutter (emojis iOS nativos)
+            EmojiPicker(
+              onEmojiSelected: (category, emoji) {
+                widget.onEmojiSelected(emoji.emoji);
+              },
+              onBackspacePressed: () {},
+              config: Config(
+                height: 256,
+                checkPlatformCompatibility: true,
+                emojiViewConfig: EmojiViewConfig(
+                  emojiSizeMax: 28,
+                  backgroundColor: bgColor,
+                ),
+                categoryViewConfig: CategoryViewConfig(
+                  backgroundColor: bgColor,
+                  dividerColor: SeendColors.border.withOpacity(0.3),
+                  iconColorSelected: SeendColors.primary,
+                  iconColor: iconColor,
+                  indicatorColor: SeendColors.primary,
+                ),
+                bottomActionBarConfig: const BottomActionBarConfig(enabled: false),
+                searchViewConfig: const SearchViewConfig(enabled: false),
+              ),
+            ),
+            // Tab 1: Stickers personalizados
+            _buildStickers(),
+          ]),
         ),
       ]),
     );
   }
 
-  Widget _buildTab(String title, int index) {
-    final isActive = _tabController.index == index;
+  Widget _buildTabIcon(IconData icon, String label, int index, Color iconColor) {
+    final isActive = _selectedTab == index;
     return GestureDetector(
       onTap: () => _tabController.animateTo(index),
-      child: Text(title, style: TextStyle(fontSize: 13, fontWeight: isActive ? FontWeight.w600 : FontWeight.normal, color: isActive ? SeendColors.primary : SeendColors.textSecondary)),
-    );
-  }
-
-  Widget _buildEmojiGrid() {
-    return GridView.count(
-      crossAxisCount: 8,
-      padding: const EdgeInsets.all(8),
-      children: _emojis.map((emoji) => GestureDetector(onTap: () => widget.onEmojiSelected(emoji), child: Center(child: Text(emoji, style: const TextStyle(fontSize: 24))))).toList(),
-    );
-  }
-
-  Widget _buildStickerGrid() {
-    final allStickers = [..._stickers, ..._customStickers];
-    return GridView.count(
-      crossAxisCount: 4,
-      padding: const EdgeInsets.all(12),
-      children: [
-        // Botón + para crear sticker
-        GestureDetector(
-          onTap: _addCustomSticker,
-          child: Container(margin: const EdgeInsets.all(4), decoration: BoxDecoration(border: Border.all(color: SeendColors.border, width: 1), borderRadius: BorderRadius.circular(12)), child: const Center(child: Icon(Icons.add, size: 32, color: SeendColors.primary))),
-        ),
-        // Stickers existentes
-        ...allStickers.map((sticker) => GestureDetector(
-          onTap: () => widget.onEmojiSelected(sticker),
-          onLongPress: () {
-            if (_customStickers.contains(sticker)) {
-              setState(() => _customStickers.remove(sticker));
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sticker eliminado'), backgroundColor: SeendColors.error, duration: Duration(seconds: 1)));
-            }
-          },
-          child: Container(margin: const EdgeInsets.all(4), decoration: BoxDecoration(border: Border.all(color: SeendColors.border.withOpacity(0.3), width: 1), borderRadius: BorderRadius.circular(12)), child: Center(child: Text(sticker, style: const TextStyle(fontSize: 36)))),
-        )),
-      ],
-    );
-  }
-
-  Widget _buildStickerCreator() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(children: [
-        const Text('Selecciona un emoji para crear tu sticker', style: TextStyle(fontSize: 14, color: SeendColors.textSecondary)),
-        const SizedBox(height: 16),
-        Expanded(
-          child: GridView.count(
-            crossAxisCount: 6,
-            children: _emojis.take(30).map((emoji) => GestureDetector(
-              onTap: () => _createStickerFromEmoji(emoji),
-              child: Container(margin: const EdgeInsets.all(4), decoration: BoxDecoration(border: Border.all(color: SeendColors.primary.withOpacity(0.3)), borderRadius: BorderRadius.circular(8)), child: Center(child: Text(emoji, style: const TextStyle(fontSize: 28)))),
-            )).toList(),
-          ),
-        ),
-        TextButton(onPressed: () => setState(() => _showStickerCreator = false), child: const Text('Cancelar')),
+      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Icon(icon, size: 22, color: isActive ? SeendColors.primary : iconColor),
+        const SizedBox(height: 2),
+        Text(label, style: TextStyle(fontSize: 10, fontWeight: isActive ? FontWeight.w600 : FontWeight.normal, color: isActive ? SeendColors.primary : iconColor)),
       ]),
     );
+  }
+
+  // Stickers personalizados (solo los que el usuario crea)
+  Widget _buildStickers() {
+    return _customStickers.isEmpty
+        ? Center(
+            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Icon(Icons.star_outline, size: 48, color: Colors.grey[400]),
+              const SizedBox(height: 8),
+              const Text('No tienes stickers', style: TextStyle(fontSize: 14, color: SeendColors.textSecondary)),
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: _createCustomSticker,
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Crear sticker'),
+                style: ElevatedButton.styleFrom(backgroundColor: SeendColors.primary, foregroundColor: Colors.white),
+              ),
+            ]),
+          )
+        : GridView.count(
+            crossAxisCount: 4,
+            padding: const EdgeInsets.all(12),
+            children: [
+              // Botón + para crear sticker
+              GestureDetector(
+                onTap: _createCustomSticker,
+                child: Container(
+                  margin: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: SeendColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: SeendColors.primary.withOpacity(0.3), width: 1),
+                  ),
+                  child: const Center(child: Icon(Icons.add, size: 36, color: SeendColors.primary)),
+                ),
+              ),
+              // Stickers personalizados
+              ..._customStickers.asMap().entries.map((entry) {
+                return GestureDetector(
+                  onTap: () => _selectSticker(entry.value),
+                  onLongPress: () => _removeCustomSticker(entry.key),
+                  child: Container(
+                    margin: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: SeendColors.primary.withOpacity(0.3), width: 1),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(15),
+                      child: Image.file(File(entry.value), fit: BoxFit.cover),
+                    ),
+                  ),
+                );
+              }),
+            ],
+          );
   }
 }

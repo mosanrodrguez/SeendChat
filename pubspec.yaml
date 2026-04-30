@@ -25,6 +25,7 @@ dependencies:
   flutter_webrtc: ^0.9.48
   record: ^5.0.0
   flutter_svg: ^2.0.9
+  emoji_picker_flutter: ^1.6.0
 
 dev_dependencies:
   flutter_test:

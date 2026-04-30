@@ -11,7 +11,7 @@ import '../config/colors.dart';
 import '../models/message.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/chat_input_bar.dart';
-import '../widgets/emoji_picker.dart';
+import '../widgets/emoji_picker.dart' as emoji;
 import 'call_screen.dart';
 import 'contact_profile_screen.dart';
 import 'image_viewer_screen.dart';
@@ -94,7 +94,7 @@ class _ChatScreenState extends State<ChatScreen> {
       body: Column(children: [
         if (_replyTo != null) Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), color: Theme.of(context).scaffoldBackgroundColor, child: Row(children: [const Icon(Icons.reply, size: 16, color: SeendColors.textSecondary), const SizedBox(width: 8), Expanded(child: Text(_replyTo!.text ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12))), GestureDetector(onTap: () => setState(() => _replyTo = null), child: const Icon(Icons.close, size: 16, color: SeendColors.textSecondary))])),
         Expanded(child: ListView.builder(controller: _scrollCtrl, padding: const EdgeInsets.symmetric(vertical: 8), itemCount: messages.length, itemBuilder: (_, i) { final msg = messages[i]; final isMe = msg.senderId == context.read<AuthProvider>().userId; return GestureDetector(onLongPress: () => setState(() => _replyTo = msg), onTap: msg.imageUrl != null ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => ImageViewerScreen(imageUrl: msg.imageUrl!))) : null, child: ChatBubble(message: msg, isMine: isMe)); })),
-        if (_showEmoji) EmojiPicker(onEmojiSelected: (emoji) => _msgCtrl.text += emoji, onClose: () => setState(() => _showEmoji = false)),
+        if (_showEmoji) emoji.EmojiPickerWidget(onEmojiSelected: (emoji) => _msgCtrl.text += emoji, onClose: () => setState(() => _showEmoji = false)),
         ChatInputBar(controller: _msgCtrl, onSend: _send, onAttach: _sendImage, onEmoji: () => setState(() => _showEmoji = !_showEmoji), onTextChanged: _onTextChanged, onVoiceSent: _onVoiceSent),
       ]),
     );
