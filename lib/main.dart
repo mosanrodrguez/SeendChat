@@ -9,16 +9,21 @@ import 'providers/status_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => ChatProvider()),
-        ChangeNotifierProvider(create: (_) => PresenceProvider()),
-        ChangeNotifierProvider(create: (_) => WebSocketProvider()),
-        ChangeNotifierProvider(create: (_) => StatusProvider()..loadDummyData()),
-      ],
-      child: const SeendApp(),
-    ),
-  );
+  
+  // Inicializar AuthProvider ANTES de ejecutar la app
+  final authProvider = AuthProvider();
+  authProvider.init().then((_) {
+    runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: authProvider),
+          ChangeNotifierProvider(create: (_) => ChatProvider()),
+          ChangeNotifierProvider(create: (_) => PresenceProvider()),
+          ChangeNotifierProvider(create: (_) => WebSocketProvider()),
+          ChangeNotifierProvider(create: (_) => StatusProvider()..loadDummyData()),
+        ],
+        child: const SeendApp(),
+      ),
+    );
+  });
 }

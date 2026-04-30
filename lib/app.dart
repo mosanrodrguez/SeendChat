@@ -10,25 +10,17 @@ class SeendApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Seend',
-      debugShowCheckedModeBanner: false,
-      theme: SeendTheme.light,
-      darkTheme: SeendTheme.dark,
-      themeMode: ThemeMode.system,
-      // Transición personalizada entre pantallas
-      pageTransitionsTheme: const PageTransitionsTheme(
-        builders: {
-          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-        },
-      ),
-      home: Consumer<AuthProvider>(
-        builder: (context, auth, _) {
-          if (auth.isLoggedIn) return const HomeScreen();
-          return const WelcomeScreen();
-        },
-      ),
+    return Consumer<AuthProvider>(
+      builder: (context, auth, _) {
+        return MaterialApp(
+          title: 'Seend',
+          debugShowCheckedModeBanner: false,
+          theme: SeendTheme.light,
+          darkTheme: SeendTheme.dark,
+          themeMode: ThemeMode.system,
+          home: auth.isLoggedIn ? const HomeScreen() : const WelcomeScreen(),
+        );
+      },
     );
   }
 }
