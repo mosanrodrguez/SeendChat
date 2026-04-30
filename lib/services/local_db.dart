@@ -14,48 +14,33 @@ class LocalDB {
 
   static Future<Database> _initDB() async {
     final path = join(await getDatabasesPath(), 'seendchat.db');
-    return openDatabase(path, version: 1, onCreate: (db, v) async {
+    return openDatabase(path, version: 2, onCreate: (db, v) async {
       await db.execute('''
         CREATE TABLE messages (
-          id TEXT PRIMARY KEY,
-          senderId TEXT,
-          senderName TEXT,
-          receiverId TEXT,
-          text TEXT,
-          imageUrl TEXT,
-          videoUrl TEXT,
-          voiceUrl TEXT,
-          imageSize INTEGER,
-          voiceDuration INTEGER,
-          replyTo TEXT,
-          replyText TEXT,
-          status TEXT,
-          createdAt TEXT,
-          isGroup INTEGER DEFAULT 0,
-          groupId TEXT
+          id TEXT PRIMARY KEY, senderId TEXT, senderName TEXT,
+          receiverId TEXT, text TEXT, imageUrl TEXT, videoUrl TEXT,
+          voiceUrl TEXT, imageSize INTEGER, voiceDuration INTEGER,
+          replyTo TEXT, replyText TEXT, status TEXT, createdAt TEXT,
+          isGroup INTEGER DEFAULT 0, groupId TEXT
         )
       ''');
       await db.execute('''
         CREATE TABLE chats (
-          chatId TEXT PRIMARY KEY,
-          userId TEXT,
-          groupId TEXT,
-          channelId TEXT,
-          displayName TEXT,
-          photoUrl TEXT,
-          lastMessage TEXT,
-          lastSenderName TEXT,
-          lastMessageTime TEXT,
-          lastStatus TEXT,
-          unreadCount INTEGER DEFAULT 0,
-          isOnline INTEGER DEFAULT 0,
-          type TEXT DEFAULT 'direct'
+          chatId TEXT PRIMARY KEY, userId TEXT, groupId TEXT,
+          channelId TEXT, displayName TEXT, photoUrl TEXT,
+          lastMessage TEXT, lastSenderName TEXT, lastMessageTime TEXT,
+          lastStatus TEXT, unreadCount INTEGER DEFAULT 0,
+          isOnline INTEGER DEFAULT 0, type TEXT DEFAULT 'direct'
         )
       ''');
+    }, onUpgrade: (db, oldV, newV) async {
+      if (oldV < 2) {
+        await db.execute('ALTER TABLE messages ADD COLUMN imageSize INTEGER');
+        await db.execute('ALTER TABLE messages ADD COLUMN voiceDuration INTEGER');
+      }
     });
   }
 
-  // Mensajes
   static Future<void> saveMessage(Message msg) async {
     final db = await database;
     await db.insert('messages', msg.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
@@ -63,12 +48,7 @@ class LocalDB {
 
   static Future<List<Message>> getMessages(String chatId) async {
     final db = await database;
-    final result = await db.query(
-      'messages',
-      where: 'senderId = ? OR receiverId = ?',
-      whereArgs: [chatId, chatId],
-      orderBy: 'createdAt ASC',
-    );
+    final result = await db.query('messages', where: 'senderId = ? OR receiverId = ?', whereArgs: [chatId, chatId], orderBy: 'createdAt ASC');
     return result.map((m) => Message.fromJson(m)).toList();
   }
 
@@ -77,23 +57,16 @@ class LocalDB {
     await db.update('messages', {'status': status}, where: 'id = ?', whereArgs: [id]);
   }
 
-  // Chats
   static Future<void> saveChat(ChatPreview chat) async {
     final db = await database;
     await db.insert('chats', {
-      'chatId': chat.chatId,
-      'userId': chat.userId,
-      'groupId': chat.groupId,
-      'channelId': chat.channelId,
-      'displayName': chat.displayName,
-      'photoUrl': chat.photoUrl,
-      'lastMessage': chat.lastMessage,
+      'chatId': chat.chatId, 'userId': chat.userId, 'groupId': chat.groupId,
+      'channelId': chat.channelId, 'displayName': chat.displayName,
+      'photoUrl': chat.photoUrl, 'lastMessage': chat.lastMessage,
       'lastSenderName': chat.lastSenderName,
       'lastMessageTime': chat.lastMessageTime?.toIso8601String(),
-      'lastStatus': chat.lastStatus,
-      'unreadCount': chat.unreadCount,
-      'isOnline': chat.isOnline ? 1 : 0,
-      'type': chat.type.name,
+      'lastStatus': chat.lastStatus, 'unreadCount': chat.unreadCount,
+      'isOnline': chat.isOnline ? 1 : 0, 'type': chat.type.name,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -101,10 +74,8 @@ class LocalDB {
     final db = await database;
     final result = await db.query('chats', orderBy: 'lastMessageTime DESC');
     return result.map((c) => ChatPreview(
-      chatId: c['chatId'] as String,
-      userId: c['userId'] as String?,
-      groupId: c['groupId'] as String?,
-      channelId: c['channelId'] as String?,
+      chatId: c['chatId'] as String, userId: c['userId'] as String?,
+      groupId: c['groupId'] as String?, channelId: c['channelId'] as String?,
       displayName: c['displayName'] as String? ?? '',
       photoUrl: c['photoUrl'] as String?,
       lastMessage: c['lastMessage'] as String? ?? '',

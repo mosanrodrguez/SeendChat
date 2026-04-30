@@ -32,6 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final chat = context.watch<ChatProvider>();
     final call = context.watch<CallProvider>();
     final auth = context.watch<AuthProvider>();
+    final presence = context.watch<PresenceProvider>();
 
     return Scaffold(
       appBar: AppBar(
@@ -45,7 +46,17 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(width: 8),
               Stack(children: [
                 CircleAvatar(radius: 16, backgroundColor: Colors.grey[300], child: Text(auth.fullName?.isNotEmpty == true ? auth.fullName![0].toUpperCase() : '?', style: const TextStyle(color: Colors.black, fontSize: 12))),
-                Positioned(bottom: 0, right: 0, child: Container(width: 8, height: 8, decoration: BoxDecoration(shape: BoxShape.circle, color: SeendColors.online, border: Border.all(color: Colors.white, width: 1.5)))),
+                Positioned(
+                  bottom: 0, right: 0,
+                  child: Container(
+                    width: 8, height: 8,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: presence.isOnline ? SeendColors.online : (presence.connectionStatus == 'connecting' ? SeendColors.connecting : SeendColors.error),
+                      border: Border.all(color: Colors.white, width: 1.5),
+                    ),
+                  ),
+                ),
               ]),
             ]),
           ),
@@ -101,14 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ContactsScreen())),
             child: const Padding(
               padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.edit, color: Colors.white, size: 20),
-                  SizedBox(width: 6),
-                  Text('Nuevo chat', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
-                ],
-              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.edit, color: Colors.white, size: 20), SizedBox(width: 6), Text('Nuevo chat', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600))]),
             ),
           ),
         ),

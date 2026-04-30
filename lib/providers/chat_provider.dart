@@ -14,9 +14,11 @@ class ChatProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   Future<void> loadChats() async {
+    // Cargar de SQLite primero (instantáneo)
     _chats = await LocalDB.getChats();
     notifyListeners();
 
+    // Luego sincronizar con servidor
     try {
       final response = await ApiService.getChats();
       if (response is List) {
@@ -26,7 +28,9 @@ class ChatProvider extends ChangeNotifier {
         }
         notifyListeners();
       }
-    } catch (_) {}
+    } catch (_) {
+      // Si falla, se queda con los datos locales
+    }
   }
 
   Future<List<Message>> loadMessages(String chatId) async {
@@ -80,9 +84,11 @@ class ChatProvider extends ChangeNotifier {
   }
 
   Future<void> sendMessage(String receiverId, String text) async {
-    await ApiService.sendMessage({
-      'receiverId': receiverId,
-      'text': text,
-    });
+    try {
+      await ApiService.sendMessage({
+        'receiverId': receiverId,
+        'text': text,
+      });
+    } catch (_) {}
   }
 }

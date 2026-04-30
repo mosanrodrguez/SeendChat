@@ -37,52 +37,21 @@ class ChatBubble extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                 children: [
-                  // Reply preview
                   if (message.replyText != null)
                     Container(
                       padding: const EdgeInsets.all(6),
                       margin: const EdgeInsets.only(bottom: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        message.replyText!,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: isMine ? SeendColors.textSecondary : Colors.white70,
-                        ),
-                      ),
+                      decoration: BoxDecoration(color: Colors.black.withOpacity(0.08), borderRadius: BorderRadius.circular(6)),
+                      child: Text(message.replyText!, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, color: isMine ? SeendColors.textSecondary : Colors.white70)),
                     ),
-                  // Text
                   if (message.text != null)
-                    Text(
-                      message.text!,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isMine
-                            ? SeendColors.textPrimary
-                            : Colors.white,
-                      ),
-                    ),
+                    Text(message.text!, style: TextStyle(fontSize: 14, color: isMine ? SeendColors.textPrimary : Colors.white)),
                   const SizedBox(height: 3),
-                  // Time + Status
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        timeStr,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: isMine ? SeendColors.textSecondary : Colors.white60,
-                        ),
-                      ),
-                      if (isMine) ...[
-                        const SizedBox(width: 3),
-                        _buildStatus(),
-                      ],
+                      Text(timeStr, style: TextStyle(fontSize: 10, color: isMine ? SeendColors.textSecondary : Colors.white60)),
+                      if (isMine) ...[const SizedBox(width: 3), _buildStatus()],
                     ],
                   ),
                 ],
