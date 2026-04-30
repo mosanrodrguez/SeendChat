@@ -7,11 +7,7 @@ class ChatBubble extends StatelessWidget {
   final Message message;
   final bool isMine;
 
-  const ChatBubble({
-    super.key,
-    required this.message,
-    required this.isMine,
-  });
+  const ChatBubble({super.key, required this.message, required this.isMine});
 
   @override
   Widget build(BuildContext context) {
@@ -22,17 +18,21 @@ class ChatBubble extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         mainAxisAlignment: isMine ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Flexible(
             child: Container(
-              constraints: const BoxConstraints(maxWidth: 280),
+              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: isMine
-                    ? (isDark ? const Color(0xFF1A1A1A) : SeendColors.bubbleSent)
-                    : SeendColors.bubbleReceived,
-                borderRadius: BorderRadius.circular(8),
+                    ? (isDark ? SeendColors.bubbleSentDark : SeendColors.bubbleSent)
+                    : (isDark ? SeendColors.bubbleReceivedDark : SeendColors.bubbleReceived),
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(12),
+                  topRight: const Radius.circular(12),
+                  bottomLeft: Radius.circular(isMine ? 12 : 0),
+                  bottomRight: Radius.circular(isMine ? 0 : 12),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
@@ -44,17 +44,15 @@ class ChatBubble extends StatelessWidget {
                       margin: const EdgeInsets.only(bottom: 4),
                       decoration: BoxDecoration(
                         color: Colors.black.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         message.replyText!,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 12,
-                          color: isMine
-                              ? SeendColors.textSecondary
-                              : Colors.white.withOpacity(0.8),
+                          fontSize: 11,
+                          color: isMine ? SeendColors.textSecondary : Colors.white70,
                         ),
                       ),
                     ),
@@ -69,7 +67,7 @@ class ChatBubble extends StatelessWidget {
                             : Colors.white,
                       ),
                     ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
                   // Time + Status
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -78,12 +76,12 @@ class ChatBubble extends StatelessWidget {
                         timeStr,
                         style: TextStyle(
                           fontSize: 10,
-                          color: isMine ? SeendColors.textSecondary : Colors.white70,
+                          color: isMine ? SeendColors.textSecondary : Colors.white60,
                         ),
                       ),
                       if (isMine) ...[
                         const SizedBox(width: 3),
-                        _buildStatusIcon(),
+                        _buildStatus(),
                       ],
                     ],
                   ),
@@ -96,16 +94,16 @@ class ChatBubble extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusIcon() {
+  Widget _buildStatus() {
     switch (message.status) {
       case 'sending':
-        return const Icon(Icons.access_time, size: 14, color: SeendColors.checkGray);
+        return const Icon(Icons.access_time, size: 13, color: SeendColors.checkGray);
       case 'sent':
-        return const Icon(Icons.check, size: 14, color: SeendColors.checkGray);
+        return const Icon(Icons.check, size: 13, color: SeendColors.checkGray);
       case 'delivered':
-        return const Icon(Icons.done_all, size: 14, color: SeendColors.checkGray);
+        return const Icon(Icons.done_all, size: 13, color: SeendColors.checkGray);
       case 'read':
-        return const Icon(Icons.done_all, size: 14, color: SeendColors.checkBlue);
+        return const Icon(Icons.done_all, size: 13, color: SeendColors.checkBlue);
       default:
         return const SizedBox.shrink();
     }

@@ -1,30 +1,32 @@
 import 'package:flutter/material.dart';
 
 class SeendColors {
-  // Primary
-  static const primary = Color(0xFF3A76F0);
-  static const primaryDark = Color(0xFF2B5FC8);
+  // Signal Blue
+  static const primary = Color(0xFF2C6BED);
+  static const primaryDark = Color(0xFF1B4BB5);
 
-  // Backgrounds
+  // Fondos
   static const background = Color(0xFFFFFFFF);
-  static const surface = Color(0xFFFAFAFA);
+  static const surface = Color(0xFFF5F5F5);
+  static const darkBackground = Color(0xFF121212);
+  static const darkSurface = Color(0xFF2A2A2A);
 
-  // Text
-  static const textPrimary = Color(0xFF1B1B1B);
-  static const textSecondary = Color(0xFF757575);
-
-  // Borders
-  static const border = Color(0xFFE0E0E0);
-
-  // Bubbles
+  // Burbujas - CORREGIDO
   static const bubbleSent = Color(0xFFFFFFFF);
-  static const bubbleReceived = Color(0xFF3A76F0);
+  static const bubbleSentDark = Color(0xFF1A1A1A);
+  static const bubbleReceived = Color(0xFF2C6BED);
+  static const bubbleReceivedDark = Color(0xFF1A3A6E);
 
-  // Status
-  static const online = Color(0xFF4CAF50);
-  static const error = Color(0xFFE53935);
+  // Texto
+  static const textPrimary = Color(0xFF1B1B1B);
+  static const textSecondary = Color(0xFF667781);
+  static const textDarkPrimary = Color(0xFFFFFFFF);
+  static const textDarkSecondary = Color(0xFFB0B0B0);
 
-  // Checks
+  // Estados
+  static const online = Color(0xFF31D767);
+  static const checkBlue = Color(0xFF2C6BED);
   static const checkGray = Color(0xFFBDBDBD);
-  static const checkBlue = Color(0xFF3A76F0);
+  static const error = Color(0xFFE53935);
+  static const connecting = Color(0xFFFFC107);
 }
