@@ -12,6 +12,7 @@ import '../models/message.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/chat_input_bar.dart';
 import '../widgets/emoji_picker.dart' as emoji;
+import '../widgets/empty_state.dart';
 import 'call_screen.dart';
 import 'contact_profile_screen.dart';
 import 'image_viewer_screen.dart';
@@ -34,10 +35,14 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<ChatProvider>().loadMessages(widget.userId);
+    // NO carga historial para chat individual
+    context.read<ChatProvider>().loadMessages(widget.userId, isChannel: false);
     final ws = context.read<WebSocketProvider>();
     final token = context.read<AuthProvider>().token ?? '';
-    ws.connect(token, onMessage: (msg) { if (msg.senderId == widget.userId || msg.receiverId == widget.userId) context.read<ChatProvider>().addMessageLocal(msg); }, onTypingCallback: (userId, isTyping) { if (userId == widget.userId) context.read<PresenceProvider>().setTyping(userId, isTyping); });
+    ws.connect(token,
+      onMessage: (msg) { if (msg.senderId == widget.userId || msg.receiverId == widget.userId) context.read<ChatProvider>().addMessageLocal(msg); },
+      onTypingCallback: (userId, isTyping) { if (userId == widget.userId) context.read<PresenceProvider>().setTyping(userId, isTyping); },
+    );
   }
 
   void _toggleEmoji(bool show) => setState(() { _showEmoji = show; show ? _focusNode.unfocus() : _focusNode.requestFocus(); });
@@ -84,22 +89,11 @@ class _ChatScreenState extends State<ChatScreen> {
         title: GestureDetector(
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ContactProfileScreen(userId: widget.userId, userName: widget.userName, userPhoto: widget.userPhoto, userPhone: widget.userPhone, userInfo: widget.userInfo))),
           child: Row(children: [
-            // Avatar más grande con animación
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              child: CircleAvatar(radius: 20, backgroundColor: Colors.white24, child: Text(widget.userName.isNotEmpty ? widget.userName[0].toUpperCase() : '?', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold))),
-            ),
+            CircleAvatar(radius: 20, backgroundColor: Colors.white24, child: Text(widget.userName.isNotEmpty ? widget.userName[0].toUpperCase() : '?', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold))),
             const SizedBox(width: 10),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(widget.userName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                child: Text(
-                  userPresence?.isTyping == true ? 'Escribiendo...' : presence.getStatusText(widget.userId),
-                  key: ValueKey(userPresence?.isTyping),
-                  style: TextStyle(fontSize: 12, color: userPresence?.isTyping == true ? SeendColors.primary : Colors.white70),
-                ),
-              ),
+              AnimatedSwitcher(duration: const Duration(milliseconds: 200), child: Text(userPresence?.isTyping == true ? 'Escribiendo...' : presence.getStatusText(widget.userId), key: ValueKey(userPresence?.isTyping), style: TextStyle(fontSize: 12, color: userPresence?.isTyping == true ? SeendColors.primary : Colors.white70))),
             ])),
           ]),
         ),
@@ -110,7 +104,11 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body: Column(children: [
         if (_replyTo != null) Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), color: Theme.of(context).scaffoldBackgroundColor, child: Row(children: [const Icon(Icons.reply, size: 16, color: SeendColors.textSecondary), const SizedBox(width: 8), Expanded(child: Text(_replyTo!.text ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12))), GestureDetector(onTap: () => setState(() => _replyTo = null), child: const Icon(Icons.close, size: 16, color: SeendColors.textSecondary))])),
-        Expanded(child: ListView.builder(controller: _scrollCtrl, padding: const EdgeInsets.symmetric(vertical: 8), itemCount: messages.length, itemBuilder: (_, i) { final msg = messages[i]; final isMe = msg.senderId == context.read<AuthProvider>().userId; return GestureDetector(onLongPress: () => setState(() => _replyTo = msg), onTap: msg.imageUrl != null ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => ImageViewerScreen(imageUrl: msg.imageUrl!))) : null, child: ChatBubble(message: msg, isMine: isMe)); })),
+        Expanded(
+          child: messages.isEmpty
+              ? const EmptyState(icon: Icons.chat_bubble_outline, title: 'Sin mensajes', subtitle: 'Envía el primer mensaje')
+              : ListView.builder(controller: _scrollCtrl, padding: const EdgeInsets.symmetric(vertical: 8), itemCount: messages.length, itemBuilder: (_, i) { final msg = messages[i]; final isMe = msg.senderId == context.read<AuthProvider>().userId; return GestureDetector(onLongPress: () => setState(() => _replyTo = msg), onTap: msg.imageUrl != null ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => ImageViewerScreen(imageUrl: msg.imageUrl!))) : null, child: ChatBubble(message: msg, isMine: isMe)); }),
+        ),
         if (_showEmoji) emoji.EmojiPickerWidget(onEmojiSelected: _onEmojiSelected, onClose: () => _toggleEmoji(false)),
         ChatInputBar(controller: _msgCtrl, onSend: _send, onAttach: _sendImage, onEmojiToggle: _toggleEmoji, showEmoji: _showEmoji, onTextChanged: _onTextChanged, onVoiceSent: _onVoiceSent),
       ]),
