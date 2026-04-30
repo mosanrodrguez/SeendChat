@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../config/colors.dart';
 import '../models/message.dart';
+import 'message_image.dart';
 
 class ChatBubble extends StatelessWidget {
   final Message message;
@@ -37,13 +38,24 @@ class ChatBubble extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                 children: [
+                  // Imagen
+                  if (message.imageUrl != null)
+                    MessageImage(
+                      imageUrl: message.imageUrl,
+                      imageSize: message.imageSize,
+                      isMine: isMine,
+                      isDownloaded: !isMine,
+                      isUploading: message.status == 'sending',
+                    ),
+                  // Reply
                   if (message.replyText != null)
                     Container(
                       padding: const EdgeInsets.all(6),
-                      margin: const EdgeInsets.only(bottom: 4),
+                      margin: const EdgeInsets.only(top: 4, bottom: 4),
                       decoration: BoxDecoration(color: Colors.black.withOpacity(0.08), borderRadius: BorderRadius.circular(6)),
                       child: Text(message.replyText!, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, color: isMine ? SeendColors.textSecondary : Colors.white70)),
                     ),
+                  // Texto
                   if (message.text != null)
                     Text(message.text!, style: TextStyle(fontSize: 14, color: isMine ? SeendColors.textPrimary : Colors.white)),
                   const SizedBox(height: 3),

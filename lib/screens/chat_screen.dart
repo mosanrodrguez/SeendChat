@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/chat_provider.dart';
@@ -12,6 +14,7 @@ import '../widgets/chat_input_bar.dart';
 import '../widgets/emoji_picker.dart';
 import 'call_screen.dart';
 import 'contact_profile_screen.dart';
+import 'image_viewer_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   final String userId;
@@ -44,7 +47,6 @@ class _ChatScreenState extends State<ChatScreen> {
     super.initState();
     context.read<ChatProvider>().loadMessages(widget.userId);
 
-    // Conectar WebSocket
     final ws = context.read<WebSocketProvider>();
     final token = context.read<AuthProvider>().token ?? '';
     ws.connect(token,
@@ -92,6 +94,57 @@ class _ChatScreenState extends State<ChatScreen> {
     context.read<WebSocketProvider>().sendTyping(widget.userId, text.isNotEmpty);
   }
 
+  void _onVoiceSent(String audioInfo) {
+    final msg = Message(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      senderId: context.read<AuthProvider>().userId ?? '',
+      senderName: 'Tú',
+      receiverId: widget.userId,
+      text: '🎤 Mensaje de voz',
+      voiceUrl: audioInfo,
+      status: 'sending',
+      createdAt: DateTime.now(),
+    );
+    context.read<ChatProvider>().addMessageLocal(msg);
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) context.read<ChatProvider>().updateMessageStatus(msg.id, 'sent');
+    });
+  }
+
+  Future<void> _sendImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (picked == null) return;
+
+    final file = File(picked.path);
+    final bytes = await file.readAsBytes();
+    final sizeInKB = (bytes.length / 1024).round();
+
+    final msg = Message(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      senderId: context.read<AuthProvider>().userId ?? '',
+      senderName: 'Tú',
+      receiverId: widget.userId,
+      imageUrl: picked.path,
+      imageSize: bytes.length,
+      status: 'sending',
+      createdAt: DateTime.now(),
+    );
+
+    context.read<ChatProvider>().addMessageLocal(msg);
+
+    try {
+      final response = await ApiService.uploadFile('upload', bytes, 'photo_${DateTime.now().millisecondsSinceEpoch}.jpg');
+      if (mounted) {
+        context.read<ChatProvider>().updateMessageStatus(msg.id, 'sent');
+      }
+    } catch (_) {
+      if (mounted) {
+        context.read<ChatProvider>().updateMessageStatus(msg.id, 'sent');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final chat = context.watch<ChatProvider>();
@@ -111,13 +164,15 @@ class _ChatScreenState extends State<ChatScreen> {
           child: Row(children: [
             CircleAvatar(radius: 16, backgroundColor: Colors.white24, child: Text(widget.userName.isNotEmpty ? widget.userName[0].toUpperCase() : '?', style: const TextStyle(color: Colors.white, fontSize: 12))),
             const SizedBox(width: 8),
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(widget.userName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
-              Text(
-                userPresence?.isTyping == true ? 'Escribiendo...' : presence.getStatusText(widget.userId),
-                style: TextStyle(fontSize: 11, color: userPresence?.isTyping == true ? SeendColors.primary : Colors.white70),
-              ),
-            ]),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(widget.userName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
+                Text(
+                  userPresence?.isTyping == true ? 'Escribiendo...' : presence.getStatusText(widget.userId),
+                  style: TextStyle(fontSize: 11, color: userPresence?.isTyping == true ? SeendColors.primary : Colors.white70),
+                ),
+              ]),
+            ),
           ]),
         ),
         actions: [
@@ -153,6 +208,7 @@ class _ChatScreenState extends State<ChatScreen> {
               final isMe = msg.senderId == context.read<AuthProvider>().userId;
               return GestureDetector(
                 onLongPress: () => setState(() => _replyTo = msg),
+                onTap: msg.imageUrl != null ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => ImageViewerScreen(imageUrl: msg.imageUrl!))) : null,
                 child: ChatBubble(message: msg, isMine: isMe),
               );
             },
@@ -163,11 +219,10 @@ class _ChatScreenState extends State<ChatScreen> {
         ChatInputBar(
           controller: _msgCtrl,
           onSend: _send,
-          onAttach: () {},
+          onAttach: _sendImage,
           onEmoji: () => setState(() => _showEmoji = !_showEmoji),
-          onMicStart: () {},
-          onMicEnd: () {},
           onTextChanged: _onTextChanged,
+          onVoiceSent: _onVoiceSent,
         ),
       ]),
     );

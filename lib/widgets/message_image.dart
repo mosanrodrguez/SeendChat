@@ -3,21 +3,27 @@ import 'package:flutter/material.dart';
 import '../config/colors.dart';
 
 class MessageImage extends StatefulWidget {
-  final String imageUrl;
-  final int imageSize;
+  final String? imageUrl;
+  final int? imageSize;
   final bool isMine;
   final bool isDownloaded;
+  final bool isUploading;
+  final double? uploadProgress;
   final VoidCallback? onDownload;
   final VoidCallback? onTap;
+  final VoidCallback? onCancel;
 
   const MessageImage({
     super.key,
-    required this.imageUrl,
-    required this.imageSize,
+    this.imageUrl,
+    this.imageSize,
     required this.isMine,
     this.isDownloaded = false,
+    this.isUploading = false,
+    this.uploadProgress,
     this.onDownload,
     this.onTap,
+    this.onCancel,
   });
 
   @override
@@ -25,8 +31,6 @@ class MessageImage extends StatefulWidget {
 }
 
 class _MessageImageState extends State<MessageImage> {
-  bool _isDownloading = false;
-
   String _formatSize(int bytes) {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
@@ -36,53 +40,42 @@ class _MessageImageState extends State<MessageImage> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: widget.isDownloaded ? widget.onTap : widget.onDownload,
+      onTap: widget.isDownloaded ? widget.onTap : (widget.isUploading ? null : widget.onDownload),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: Stack(
           alignment: Alignment.center,
           children: [
             // Imagen
-            widget.isDownloaded
-                ? Image.network(
-                    widget.imageUrl,
-                    width: 200,
-                    height: 200,
-                    fit: BoxFit.cover,
-                  )
-                : Container(
-                    width: 200,
-                    height: 200,
-                    color: Colors.grey[300],
-                    child: const Center(
-                      child: Icon(Icons.image, size: 48, color: Colors.grey),
-                    ),
-                  ),
-            // Botón de descarga (si no está descargada)
-            if (!widget.isDownloaded)
+            if (widget.isDownloaded && widget.imageUrl != null)
+              Image.network(widget.imageUrl!, width: 200, height: 200, fit: BoxFit.cover)
+            else
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _isDownloading
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
-                        : const Icon(Icons.download, color: Colors.white, size: 16),
-                    const SizedBox(width: 6),
-                    Text(
-                      _formatSize(widget.imageSize),
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
-                    ),
-                  ],
-                ),
+                width: 200, height: 200,
+                color: Colors.grey[300],
+                child: const Center(child: Icon(Icons.image, size: 48, color: Colors.grey)),
+              ),
+            // Subiendo
+            if (widget.isUploading)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(20)),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white, value: widget.uploadProgress)),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.upload, color: Colors.white, size: 16),
+                ]),
+              ),
+            // Descargar
+            if (!widget.isDownloaded && !widget.isUploading && widget.imageSize != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(16)),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  const Icon(Icons.download, color: Colors.white, size: 16),
+                  const SizedBox(width: 6),
+                  Text(_formatSize(widget.imageSize!), style: const TextStyle(color: Colors.white, fontSize: 12)),
+                ]),
               ),
           ],
         ),
