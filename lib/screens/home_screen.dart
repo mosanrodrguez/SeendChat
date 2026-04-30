@@ -46,17 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(width: 8),
               Stack(children: [
                 CircleAvatar(radius: 16, backgroundColor: Colors.grey[300], child: Text(auth.fullName?.isNotEmpty == true ? auth.fullName![0].toUpperCase() : '?', style: const TextStyle(color: Colors.black, fontSize: 12))),
-                Positioned(
-                  bottom: 0, right: 0,
-                  child: Container(
-                    width: 8, height: 8,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: presence.isOnline ? SeendColors.online : (presence.connectionStatus == 'connecting' ? SeendColors.connecting : SeendColors.error),
-                      border: Border.all(color: Colors.white, width: 1.5),
-                    ),
-                  ),
-                ),
+                Positioned(bottom: 0, right: 0, child: Container(width: 8, height: 8, decoration: BoxDecoration(shape: BoxShape.circle, color: presence.isOnline ? SeendColors.online : SeendColors.error, border: Border.all(color: Colors.white, width: 1.5)))),
               ]),
             ]),
           ),
@@ -70,14 +60,14 @@ class _HomeScreenState extends State<HomeScreen> {
             child: chat.isLoading
                 ? const Center(child: CircularProgressIndicator(color: SeendColors.primary))
                 : chat.chats.isEmpty
-                    ? Center(child: Text('No hay conversaciones', style: TextStyle(fontSize: 14, color: SeendColors.textSecondary)))
+                    ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.chat_bubble_outline, size: 48, color: Colors.grey[400]), const SizedBox(height: 12), Text('No hay conversaciones', style: TextStyle(fontSize: 14, color: SeendColors.textSecondary))]))
                     : ListView.builder(
                         itemCount: chat.chats.length,
                         itemBuilder: (_, i) {
                           final c = chat.chats[i];
                           final timeStr = c.lastMessageTime != null ? '${c.lastMessageTime!.hour.toString().padLeft(2, '0')}:${c.lastMessageTime!.minute.toString().padLeft(2, '0')}' : '';
                           IconData leadingIcon = Icons.person;
-                          if (c.type == ChatType.group) leadingIcon = Icons.group;
+                          if (c.type == ChatType.group) leadingIcon = Icons.groups;
                           if (c.type == ChatType.channel) leadingIcon = Icons.campaign;
                           return ListTile(
                             leading: CircleAvatar(radius: 24, backgroundColor: SeendColors.primary, child: Icon(leadingIcon, color: Colors.white, size: 22)),
@@ -105,17 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: Container(
         height: 48,
         decoration: BoxDecoration(color: SeendColors.primary, borderRadius: BorderRadius.circular(24)),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(24),
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ContactsScreen())),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.edit, color: Colors.white, size: 20), SizedBox(width: 6), Text('Nuevo chat', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600))]),
-            ),
-          ),
-        ),
+        child: Material(color: Colors.transparent, child: InkWell(borderRadius: BorderRadius.circular(24), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ContactsScreen())), child: const Padding(padding: EdgeInsets.symmetric(horizontal: 20), child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.edit, color: Colors.white, size: 20), SizedBox(width: 6), Text('Nuevo chat', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600))])))),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );

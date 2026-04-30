@@ -17,21 +17,9 @@ import 'contact_profile_screen.dart';
 import 'image_viewer_screen.dart';
 
 class ChatScreen extends StatefulWidget {
-  final String userId;
-  final String userName;
-  final String? userPhoto;
-  final String? userPhone;
-  final String? userInfo;
-
-  const ChatScreen({
-    super.key,
-    required this.userId,
-    required this.userName,
-    this.userPhoto,
-    this.userPhone,
-    this.userInfo,
-  });
-
+  final String userId; final String userName; final String? userPhoto;
+  final String? userPhone; final String? userInfo;
+  const ChatScreen({super.key, required this.userId, required this.userName, this.userPhoto, this.userPhone, this.userInfo});
   @override
   State<ChatScreen> createState() => _ChatScreenState();
 }
@@ -39,110 +27,41 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final _msgCtrl = TextEditingController();
   final _scrollCtrl = ScrollController();
-  Message? _replyTo;
-  bool _showEmoji = false;
+  Message? _replyTo; bool _showEmoji = false;
 
   @override
   void initState() {
     super.initState();
     context.read<ChatProvider>().loadMessages(widget.userId);
-
     final ws = context.read<WebSocketProvider>();
     final token = context.read<AuthProvider>().token ?? '';
-    ws.connect(token,
-      onMessage: (msg) {
-        if (msg.senderId == widget.userId || msg.receiverId == widget.userId) {
-          context.read<ChatProvider>().addMessageLocal(msg);
-        }
-      },
-      onTypingCallback: (userId, isTyping) {
-        if (userId == widget.userId) {
-          context.read<PresenceProvider>().setTyping(userId, isTyping);
-        }
-      },
-    );
+    ws.connect(token, onMessage: (msg) { if (msg.senderId == widget.userId || msg.receiverId == widget.userId) context.read<ChatProvider>().addMessageLocal(msg); }, onTypingCallback: (userId, isTyping) { if (userId == widget.userId) context.read<PresenceProvider>().setTyping(userId, isTyping); });
   }
 
   void _send() {
-    final text = _msgCtrl.text.trim();
-    if (text.isEmpty) return;
-
-    final msg = Message(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      senderId: context.read<AuthProvider>().userId ?? '',
-      senderName: 'Tú',
-      receiverId: widget.userId,
-      text: text,
-      status: 'sending',
-      createdAt: DateTime.now(),
-    );
-
+    final text = _msgCtrl.text.trim(); if (text.isEmpty) return;
+    final msg = Message(id: DateTime.now().millisecondsSinceEpoch.toString(), senderId: context.read<AuthProvider>().userId ?? '', senderName: 'Tú', receiverId: widget.userId, text: text, status: 'sending', createdAt: DateTime.now());
     context.read<ChatProvider>().addMessageLocal(msg);
     context.read<WebSocketProvider>().sendMessage(widget.userId, text);
-    _msgCtrl.clear();
-    setState(() { _replyTo = null; _showEmoji = false; });
-
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted) context.read<ChatProvider>().updateMessageStatus(msg.id, 'sent');
-    });
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) context.read<ChatProvider>().updateMessageStatus(msg.id, 'delivered');
-    });
+    _msgCtrl.clear(); setState(() { _replyTo = null; _showEmoji = false; });
+    Future.delayed(const Duration(milliseconds: 500), () { if (mounted) context.read<ChatProvider>().updateMessageStatus(msg.id, 'sent'); });
+    Future.delayed(const Duration(seconds: 2), () { if (mounted) context.read<ChatProvider>().updateMessageStatus(msg.id, 'delivered'); });
   }
 
-  void _onTextChanged(String text) {
-    context.read<WebSocketProvider>().sendTyping(widget.userId, text.isNotEmpty);
-  }
-
+  void _onTextChanged(String text) => context.read<WebSocketProvider>().sendTyping(widget.userId, text.isNotEmpty);
   void _onVoiceSent(String audioInfo) {
-    final msg = Message(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      senderId: context.read<AuthProvider>().userId ?? '',
-      senderName: 'Tú',
-      receiverId: widget.userId,
-      text: '🎤 Mensaje de voz',
-      voiceUrl: audioInfo,
-      status: 'sending',
-      createdAt: DateTime.now(),
-    );
+    final msg = Message(id: DateTime.now().millisecondsSinceEpoch.toString(), senderId: context.read<AuthProvider>().userId ?? '', senderName: 'Tú', receiverId: widget.userId, text: '🎤 Mensaje de voz', voiceUrl: audioInfo, status: 'sending', createdAt: DateTime.now());
     context.read<ChatProvider>().addMessageLocal(msg);
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) context.read<ChatProvider>().updateMessageStatus(msg.id, 'sent');
-    });
+    Future.delayed(const Duration(seconds: 1), () { if (mounted) context.read<ChatProvider>().updateMessageStatus(msg.id, 'sent'); });
   }
 
   Future<void> _sendImage() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 70);
     if (picked == null) return;
-
-    final file = File(picked.path);
-    final bytes = await file.readAsBytes();
-    final sizeInKB = (bytes.length / 1024).round();
-
-    final msg = Message(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      senderId: context.read<AuthProvider>().userId ?? '',
-      senderName: 'Tú',
-      receiverId: widget.userId,
-      imageUrl: picked.path,
-      imageSize: bytes.length,
-      status: 'sending',
-      createdAt: DateTime.now(),
-    );
-
+    final bytes = await File(picked.path).readAsBytes();
+    final msg = Message(id: DateTime.now().millisecondsSinceEpoch.toString(), senderId: context.read<AuthProvider>().userId ?? '', senderName: 'Tú', receiverId: widget.userId, imageUrl: picked.path, imageSize: bytes.length, status: 'sending', createdAt: DateTime.now());
     context.read<ChatProvider>().addMessageLocal(msg);
-
-    try {
-      final response = await ApiService.uploadFile('upload', bytes, 'photo_${DateTime.now().millisecondsSinceEpoch}.jpg');
-      if (mounted) {
-        context.read<ChatProvider>().updateMessageStatus(msg.id, 'sent');
-      }
-    } catch (_) {
-      if (mounted) {
-        context.read<ChatProvider>().updateMessageStatus(msg.id, 'sent');
-      }
-    }
+    Future.delayed(const Duration(seconds: 1), () { if (mounted) context.read<ChatProvider>().updateMessageStatus(msg.id, 'sent'); });
   }
 
   @override
@@ -157,73 +76,26 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
         leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.pop(context)),
         title: GestureDetector(
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ContactProfileScreen(
-            userId: widget.userId, userName: widget.userName,
-            userPhoto: widget.userPhoto, userPhone: widget.userPhone, userInfo: widget.userInfo,
-          ))),
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ContactProfileScreen(userId: widget.userId, userName: widget.userName, userPhoto: widget.userPhoto, userPhone: widget.userPhone, userInfo: widget.userInfo))),
           child: Row(children: [
-            CircleAvatar(radius: 16, backgroundColor: Colors.white24, child: Text(widget.userName.isNotEmpty ? widget.userName[0].toUpperCase() : '?', style: const TextStyle(color: Colors.white, fontSize: 12))),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(widget.userName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
-                Text(
-                  userPresence?.isTyping == true ? 'Escribiendo...' : presence.getStatusText(widget.userId),
-                  style: TextStyle(fontSize: 11, color: userPresence?.isTyping == true ? SeendColors.primary : Colors.white70),
-                ),
-              ]),
-            ),
+            CircleAvatar(radius: 18, backgroundColor: Colors.white24, child: Text(widget.userName.isNotEmpty ? widget.userName[0].toUpperCase() : '?', style: const TextStyle(color: Colors.white, fontSize: 14))),
+            const SizedBox(width: 10),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(widget.userName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+              Text(userPresence?.isTyping == true ? 'Escribiendo...' : presence.getStatusText(widget.userId), style: TextStyle(fontSize: 12, color: userPresence?.isTyping == true ? SeendColors.primary : Colors.white70)),
+            ])),
           ]),
         ),
         actions: [
-          IconButton(icon: const Icon(Icons.videocam, color: Colors.white), onPressed: () {
-            context.read<CallProvider>().startCall(widget.userId, widget.userName, callerPhoto: widget.userPhoto, isVideo: true);
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const CallScreen()));
-          }),
-          IconButton(icon: const Icon(Icons.call, color: Colors.white), onPressed: () {
-            context.read<CallProvider>().startCall(widget.userId, widget.userName, callerPhoto: widget.userPhoto);
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const CallScreen()));
-          }),
+          IconButton(icon: const Icon(Icons.videocam, color: Colors.white, size: 22), onPressed: () { context.read<CallProvider>().startCall(widget.userId, widget.userName, isVideo: true); Navigator.push(context, MaterialPageRoute(builder: (_) => const CallScreen())); }),
+          IconButton(icon: const Icon(Icons.call, color: Colors.white, size: 22), onPressed: () { context.read<CallProvider>().startCall(widget.userId, widget.userName); Navigator.push(context, MaterialPageRoute(builder: (_) => const CallScreen())); }),
         ],
       ),
       body: Column(children: [
-        if (_replyTo != null)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            color: Theme.of(context).scaffoldBackgroundColor,
-            child: Row(children: [
-              const Icon(Icons.reply, size: 16, color: SeendColors.textSecondary),
-              const SizedBox(width: 8),
-              Expanded(child: Text(_replyTo!.text ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12))),
-              GestureDetector(onTap: () => setState(() => _replyTo = null), child: const Icon(Icons.close, size: 16, color: SeendColors.textSecondary)),
-            ]),
-          ),
-        Expanded(
-          child: ListView.builder(
-            controller: _scrollCtrl,
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: messages.length,
-            itemBuilder: (_, i) {
-              final msg = messages[i];
-              final isMe = msg.senderId == context.read<AuthProvider>().userId;
-              return GestureDetector(
-                onLongPress: () => setState(() => _replyTo = msg),
-                onTap: msg.imageUrl != null ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => ImageViewerScreen(imageUrl: msg.imageUrl!))) : null,
-                child: ChatBubble(message: msg, isMine: isMe),
-              );
-            },
-          ),
-        ),
-        if (_showEmoji)
-          EmojiPicker(onEmojiSelected: (emoji) => _msgCtrl.text += emoji, onClose: () => setState(() => _showEmoji = false)),
-        ChatInputBar(
-          controller: _msgCtrl,
-          onSend: _send,
-          onAttach: _sendImage,
-          onEmoji: () => setState(() => _showEmoji = !_showEmoji),
-          onTextChanged: _onTextChanged,
-          onVoiceSent: _onVoiceSent,
-        ),
+        if (_replyTo != null) Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), color: Theme.of(context).scaffoldBackgroundColor, child: Row(children: [const Icon(Icons.reply, size: 16, color: SeendColors.textSecondary), const SizedBox(width: 8), Expanded(child: Text(_replyTo!.text ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12))), GestureDetector(onTap: () => setState(() => _replyTo = null), child: const Icon(Icons.close, size: 16, color: SeendColors.textSecondary))])),
+        Expanded(child: ListView.builder(controller: _scrollCtrl, padding: const EdgeInsets.symmetric(vertical: 8), itemCount: messages.length, itemBuilder: (_, i) { final msg = messages[i]; final isMe = msg.senderId == context.read<AuthProvider>().userId; return GestureDetector(onLongPress: () => setState(() => _replyTo = msg), onTap: msg.imageUrl != null ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => ImageViewerScreen(imageUrl: msg.imageUrl!))) : null, child: ChatBubble(message: msg, isMine: isMe)); })),
+        if (_showEmoji) EmojiPicker(onEmojiSelected: (emoji) => _msgCtrl.text += emoji, onClose: () => setState(() => _showEmoji = false)),
+        ChatInputBar(controller: _msgCtrl, onSend: _send, onAttach: _sendImage, onEmoji: () => setState(() => _showEmoji = !_showEmoji), onTextChanged: _onTextChanged, onVoiceSent: _onVoiceSent),
       ]),
     );
   }
