@@ -45,7 +45,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final oldUsername = '@${context.read<AuthProvider>().username ?? ''}';
+    final auth = context.read<AuthProvider>();
+    final oldUsername = '@${auth.username ?? ''}';
     final newUsername = _userCtrl.text;
     final usernameChanged = oldUsername != newUsername;
 
@@ -54,24 +55,35 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       appBar: AppBar(
         title: const Text('Editar perfil', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
         actions: [
-          if (_modified) TextButton(onPressed: _save, child: const Text('Guardar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
+          if (_modified)
+            TextButton(onPressed: _save, child: const Text('Guardar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
+          // Avatar editable
           Center(
             child: GestureDetector(
               onTap: _pickImage,
               child: Stack(
                 children: [
                   CircleAvatar(
-                    radius: 48,
+                    radius: 56,
                     backgroundColor: SeendColors.primary,
                     backgroundImage: _image != null ? FileImage(_image!) : null,
-                    child: _image == null ? Text((_nameCtrl.text.isNotEmpty ? _nameCtrl.text[0].toUpperCase() : '?'), style: const TextStyle(fontSize: 32, color: Colors.white)) : null,
+                    child: _image == null
+                        ? Text((_nameCtrl.text.isNotEmpty ? _nameCtrl.text[0].toUpperCase() : '?'), style: const TextStyle(fontSize: 40, color: Colors.white))
+                        : null,
                   ),
-                  Positioned(bottom: 0, right: 0, child: Container(width: 28, height: 28, decoration: BoxDecoration(color: SeendColors.primary, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)), child: const Icon(Icons.camera_alt, color: Colors.white, size: 14))),
+                  Positioned(
+                    bottom: 0, right: 0,
+                    child: Container(
+                      width: 32, height: 32,
+                      decoration: BoxDecoration(color: SeendColors.primary, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
+                      child: const Icon(Icons.camera_alt, color: Colors.white, size: 16),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -79,15 +91,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           const SizedBox(height: 8),
           const Center(child: Text('Toca para cambiar foto', style: TextStyle(fontSize: 11, color: SeendColors.textSecondary))),
           const SizedBox(height: 24),
+          // Nombre
           TextField(controller: _nameCtrl, onChanged: (_) => _onChanged(), decoration: const InputDecoration(labelText: 'Nombre')),
           const SizedBox(height: 16),
-          TextField(controller: _infoCtrl, onChanged: (_) => _onChanged(), decoration: const InputDecoration(labelText: 'Info')),
+          // Info
+          TextField(controller: _infoCtrl, onChanged: (_) => _onChanged(), decoration: const InputDecoration(labelText: 'Info'), maxLines: 2),
           const SizedBox(height: 16),
+          // Username
           TextField(controller: _userCtrl, onChanged: (_) => _onChanged(), decoration: const InputDecoration(labelText: 'Nombre de usuario')),
           if (usernameChanged)
             Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: Text('Tu enlace cambiará a: https://chat.seend.com/profile/${newUsername.replaceAll("@", "")}', style: const TextStyle(fontSize: 11, color: SeendColors.primary)),
+              child: Text(
+                'Tu enlace cambiará a: https://chat.seend.com/profile/${newUsername.replaceAll("@", "")}',
+                style: const TextStyle(fontSize: 11, color: SeendColors.primary),
+              ),
+            ),
+          const SizedBox(height: 24),
+          // Botón Guardar
+          if (_modified)
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(onPressed: _save, child: const Text('GUARDAR CAMBIOS', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600))),
             ),
         ],
       ),

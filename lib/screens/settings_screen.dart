@@ -6,6 +6,8 @@ import '../config/colors.dart';
 import '../config/api_config.dart';
 import 'my_profile_screen.dart';
 import 'account_screen.dart';
+import 'data_storage_screen.dart';
+import 'privacy_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -17,9 +19,7 @@ class SettingsScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('Ajustes', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
-      ),
+      appBar: AppBar(title: const Text('Ajustes', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600))),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
@@ -34,7 +34,6 @@ class SettingsScreen extends StatelessWidget {
             ]),
           ),
           const SizedBox(height: 24),
-          // Botones Mi Perfil + Compartir
           Row(children: [
             Expanded(child: _buildOption(context, Icons.person, 'Mi perfil', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyProfileScreen())))),
             const SizedBox(width: 16),
@@ -42,10 +41,9 @@ class SettingsScreen extends StatelessWidget {
           ]),
           const SizedBox(height: 24),
           const Divider(),
-          // Opciones
           ListTile(leading: const Icon(Icons.account_circle, color: SeendColors.primary), title: const Text('Cuenta'), trailing: const Icon(Icons.chevron_right), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AccountScreen()))),
-          ListTile(leading: const Icon(Icons.storage, color: SeendColors.primary), title: const Text('Datos y almacenamiento'), trailing: const Icon(Icons.chevron_right), onTap: () {}),
-          ListTile(leading: const Icon(Icons.lock, color: SeendColors.primary), title: const Text('Privacidad'), trailing: const Icon(Icons.chevron_right), onTap: () {}),
+          ListTile(leading: const Icon(Icons.storage, color: SeendColors.primary), title: const Text('Datos y almacenamiento'), trailing: const Icon(Icons.chevron_right), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DataStorageScreen()))),
+          ListTile(leading: const Icon(Icons.lock, color: SeendColors.primary), title: const Text('Privacidad'), trailing: const Icon(Icons.chevron_right), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyScreen()))),
         ],
       ),
     );
