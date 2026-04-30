@@ -50,7 +50,12 @@ class _EmojiPickerWidgetState extends State<EmojiPickerWidget> with SingleTicker
           _buildTabIcon(Icons.emoji_emotions, 'Emojis', 0, iconColor), const SizedBox(width: 40), _buildTabIcon(Icons.star, 'Stickers', 1, iconColor),
         ])),
         Expanded(child: TabBarView(controller: _tabController, children: [
-          EmojiPicker(onEmojiSelected: (category, emoji) => widget.onEmojiSelected(emoji.emoji), onBackspacePressed: () {}, config: Config(checkPlatformCompatibility: true, emojiViewConfig: EmojiViewConfig(emojiSizeMax: 28, backgroundColor: bgColor), categoryViewConfig: CategoryViewConfig(backgroundColor: bgColor, dividerColor: SeendColors.border.withOpacity(0.3), iconColorSelected: SeendColors.primary, iconColor: iconColor, indicatorColor: SeendColors.primary))),
+          // Emoji Picker simplificado (sin parámetros que no existen en esta versión)
+          EmojiPicker(
+            onEmojiSelected: (category, emoji) => widget.onEmojiSelected(emoji.emoji),
+            onBackspacePressed: () {},
+            config: const Config(checkPlatformCompatibility: true),
+          ),
           _buildStickers(),
         ])),
       ]),
