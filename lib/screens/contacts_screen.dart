@@ -4,6 +4,7 @@ import '../services/api_service.dart';
 import '../models/user.dart';
 import '../config/colors.dart';
 import 'chat_screen.dart';
+import 'bot_chat_screen.dart';
 import 'create_group_screen.dart';
 import 'create_channel_screen.dart';
 
@@ -16,6 +17,7 @@ class ContactsScreen extends StatefulWidget {
 class _ContactsScreenState extends State<ContactsScreen> {
   List<User> _users = [];
   List<Map<String, String>> _phoneContacts = [];
+  List<Map<String, String>> _bots = [];
   bool _loading = true;
   bool _showSearch = false;
   final _searchCtrl = TextEditingController();
@@ -28,7 +30,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
 
   Future<void> _loadAll() async {
     setState(() => _loading = true);
-    await Future.wait([_loadUsers(), _loadPhoneContacts()]);
+    await Future.wait([_loadUsers(), _loadPhoneContacts(), _loadBots()]);
     setState(() => _loading = false);
   }
 
@@ -47,35 +49,55 @@ class _ContactsScreenState extends State<ContactsScreen> {
         setState(() => _phoneContacts = contacts.map<Map<String, String>>((c) => {'name': c['name'] ?? '', 'phone': c['phone'] ?? ''}).toList());
       }
     } catch (_) {
-      // Fallback: contactos dummy para pruebas
       setState(() => _phoneContacts = [
         {'name': 'María García', 'phone': '+52 55 1234 5678'},
         {'name': 'Carlos López', 'phone': '+52 55 8765 4321'},
         {'name': 'Laura Martínez', 'phone': '+1 555 123 4567'},
-        {'name': 'Pedro Sánchez', 'phone': '+34 612 345 678'},
-        {'name': 'Ana Gómez', 'phone': '+57 300 123 4567'},
-        {'name': 'Diego Ruiz', 'phone': '+54 11 2345 6789'},
-        {'name': 'Marta Fernández', 'phone': '+56 9 8765 4321'},
+      ]);
+    }
+  }
+
+  Future<void> _loadBots() async {
+    try {
+      final r = await ApiService.get('bots');
+      if (r is List) {
+        setState(() => _bots = r.map<Map<String, String>>((b) => {
+          'id': b['id'] ?? '',
+          'name': b['name'] ?? '',
+          'username': b['username'] ?? '',
+          'description': b['description'] ?? '',
+        }).toList());
+      }
+    } catch (_) {
+      // Bots de ejemplo para pruebas
+      setState(() => _bots = [
+        {'id': 'bot1', 'name': 'SeendBotFather', 'username': 'BotFather', 'description': 'Crea y gestiona tus bots'},
+        {'id': 'bot2', 'name': 'ClimaBot', 'username': 'ClimaBot', 'description': 'Información del clima'},
+        {'id': 'bot3', 'name': 'TraductorBot', 'username': 'TraductorBot', 'description': 'Traduce entre 50 idiomas'},
       ]);
     }
   }
 
   List<User> _filterUsers() {
     if (_searchCtrl.text.isEmpty) return _users;
-    return _users.where((u) => (u.fullName ?? '').toLowerCase().contains(_searchCtrl.text.toLowerCase()) || (u.username ?? '').toLowerCase().contains(_searchCtrl.text.toLowerCase())).toList();
+    return _users.where((u) =>
+      (u.fullName ?? '').toLowerCase().contains(_searchCtrl.text.toLowerCase()) ||
+      (u.username ?? '').toLowerCase().contains(_searchCtrl.text.toLowerCase())
+    ).toList();
   }
 
-  List<Map<String, String>> _filterPhoneContacts() {
-    if (_searchCtrl.text.isEmpty) return _phoneContacts;
-    return _phoneContacts.where((c) => c['name']!.toLowerCase().contains(_searchCtrl.text.toLowerCase()) || c['phone']!.contains(_searchCtrl.text)).toList();
+  List<Map<String, String>> _filterBots() {
+    if (_searchCtrl.text.isEmpty) return _bots;
+    return _bots.where((b) =>
+      b['name']!.toLowerCase().contains(_searchCtrl.text.toLowerCase()) ||
+      b['username']!.toLowerCase().contains(_searchCtrl.text.toLowerCase())
+    ).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     final filteredUsers = _filterUsers();
-    final filteredPhone = _filterPhoneContacts();
-    // Mostrar solo contactos del teléfono que NO están en Seend
-    final phoneNotInSeend = filteredPhone.where((pc) => !_users.any((u) => u.phoneNumber == pc['phone'])).toList();
+    final filteredBots = _filterBots();
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -95,14 +117,53 @@ class _ContactsScreenState extends State<ContactsScreen> {
         ],
       ),
       body: Column(children: [
-        ListTile(leading: const Icon(Icons.group_add, color: SeendColors.primary), title: const Text('Nuevo grupo'), trailing: const Icon(Icons.chevron_right, color: SeendColors.textSecondary), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateGroupScreen()))),
-        ListTile(leading: const Icon(Icons.campaign, color: SeendColors.primary), title: const Text('Nuevo canal'), trailing: const Icon(Icons.chevron_right, color: SeendColors.textSecondary), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateChannelScreen()))),
+        // Opciones fijas
+        ListTile(
+          leading: const Icon(Icons.group_add, color: SeendColors.primary),
+          title: const Text('Nuevo grupo', style: TextStyle(fontSize: 15)),
+          trailing: const Icon(Icons.chevron_right, color: SeendColors.textSecondary),
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateGroupScreen())),
+        ),
+        ListTile(
+          leading: const Icon(Icons.campaign, color: SeendColors.primary),
+          title: const Text('Nuevo canal', style: TextStyle(fontSize: 15)),
+          trailing: const Icon(Icons.chevron_right, color: SeendColors.textSecondary),
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateChannelScreen())),
+        ),
+        // SeendBotFather siempre visible
+        ListTile(
+          leading: CircleAvatar(radius: 20, backgroundColor: SeendColors.primary, child: const Text('🤖', style: TextStyle(fontSize: 18))),
+          title: const Text('SeendBotFather', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+          subtitle: const Text('Crea y gestiona tus bots', style: TextStyle(fontSize: 13)),
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(color: SeendColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+            child: const Text('Oficial', style: TextStyle(fontSize: 10, color: SeendColors.primary, fontWeight: FontWeight.w600)),
+          ),
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => BotChatScreen(botId: 'botfather', botName: 'SeendBotFather', botUsername: 'BotFather'))),
+        ),
         const Divider(height: 1),
         Expanded(
           child: _loading
               ? const Center(child: CircularProgressIndicator(color: SeendColors.primary))
               : ListView(
                   children: [
+                    // Bots encontrados
+                    if (filteredBots.isNotEmpty) ...[
+                      const Padding(padding: EdgeInsets.fromLTRB(16, 12, 16, 4), child: Text('Bots', style: TextStyle(fontSize: 12, color: SeendColors.textSecondary, fontWeight: FontWeight.w500))),
+                      ...filteredBots.where((b) => b['username'] != 'BotFather').map((b) => ListTile(
+                        leading: CircleAvatar(radius: 24, backgroundColor: SeendColors.primary, child: Text(b['name']?.isNotEmpty == true ? b['name']![0].toUpperCase() : '🤖', style: const TextStyle(color: Colors.white, fontSize: 16))),
+                        title: Text(b['name'] ?? '', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                        subtitle: Text('@${b['username'] ?? ''} · ${b['description'] ?? ''}', style: const TextStyle(fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
+                        trailing: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(color: SeendColors.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                          child: const Text('Bot', style: TextStyle(fontSize: 10, color: SeendColors.primary, fontWeight: FontWeight.w600)),
+                        ),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => BotChatScreen(botId: b['id']!, botName: b['name']!, botUsername: b['username']!, botAvatar: null))),
+                      )),
+                    ],
+                    // Usuarios de Seend
                     if (filteredUsers.isNotEmpty) ...[
                       const Padding(padding: EdgeInsets.fromLTRB(16, 12, 16, 4), child: Text('Usuarios de Seend', style: TextStyle(fontSize: 12, color: SeendColors.textSecondary, fontWeight: FontWeight.w500))),
                       ...filteredUsers.map((u) => ListTile(
@@ -110,18 +171,6 @@ class _ContactsScreenState extends State<ContactsScreen> {
                         title: Text(u.displayName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                         subtitle: Text(u.info ?? '', style: const TextStyle(fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
                         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(userId: u.id, userName: u.displayName, userPhoto: u.photoUrl, userPhone: u.phoneNumber))),
-                      )),
-                    ],
-                    if (phoneNotInSeend.isNotEmpty) ...[
-                      const Padding(padding: EdgeInsets.fromLTRB(16, 12, 16, 4), child: Text('Contactos del teléfono', style: TextStyle(fontSize: 12, color: SeendColors.textSecondary, fontWeight: FontWeight.w500))),
-                      ...phoneNotInSeend.map((c) => ListTile(
-                        leading: CircleAvatar(radius: 24, backgroundColor: Colors.grey[400], child: Text(c['name']?.isNotEmpty == true ? c['name']![0].toUpperCase() : '?', style: const TextStyle(color: Colors.white))),
-                        title: Text(c['name'] ?? '', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-                        subtitle: Text(c['phone'] ?? '', style: const TextStyle(fontSize: 13, color: SeendColors.textSecondary)),
-                        trailing: const Text('Invitar', style: TextStyle(color: SeendColors.primary, fontSize: 13, fontWeight: FontWeight.w600)),
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Invitación enviada'), backgroundColor: SeendColors.primary));
-                        },
                       )),
                     ],
                   ],
