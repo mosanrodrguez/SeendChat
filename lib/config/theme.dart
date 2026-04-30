@@ -42,7 +42,7 @@ class SeendTheme {
       focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: SeendColors.primary, width: 2)),
     ),
 
-    cardTheme: const CardThemeData(elevation: 0, shadowColor: Colors.transparent),
+    cardTheme: const CardTheme(elevation: 0, shadowColor: Colors.transparent),
 
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       backgroundColor: SeendColors.primary,
@@ -112,7 +112,7 @@ class SeendTheme {
       focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: SeendColors.primary, width: 2)),
     ),
 
-    cardTheme: const CardThemeData(elevation: 0, shadowColor: Colors.transparent),
+    cardTheme: const CardTheme(elevation: 0, shadowColor: Colors.transparent),
 
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       backgroundColor: SeendColors.primary,
