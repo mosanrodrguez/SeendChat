@@ -99,7 +99,7 @@ class _ChatScreenState extends State<ChatScreen> {
         if (_replyTo != null) Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), color: Theme.of(context).scaffoldBackgroundColor, child: Row(children: [const Icon(Icons.reply, size: 16, color: SeendColors.textSecondary), const SizedBox(width: 8), Expanded(child: Text(_replyTo!.text ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12))), GestureDetector(onTap: () => setState(() => _replyTo = null), child: const Icon(Icons.close, size: 16, color: SeendColors.textSecondary))])),
         Expanded(child: messages.isEmpty ? const EmptyState(icon: Icons.chat_bubble_outline, title: 'Sin mensajes', subtitle: 'Envía el primer mensaje') : ListView.builder(controller: _scrollCtrl, padding: const EdgeInsets.symmetric(vertical: 8), itemCount: messages.length, itemBuilder: (_, i) { final msg = messages[i]; final isMe = msg.senderId == context.read<AuthProvider>().userId; return GestureDetector(onLongPress: () => setState(() => _replyTo = msg), onTap: msg.imageUrl != null ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => ImageViewerScreen(imageUrl: msg.imageUrl!))) : null, child: ChatBubble(message: msg, isMine: isMe)); })),
         if (_showEmoji) emoji.EmojiPickerWidget(onEmojiSelected: _onEmojiSelected, onClose: () => _toggleEmoji(false)),
-        ChatInputBar(controller: _msgCtrl, onSend: _send, onAttach: _sendImage, onEmojiToggle: _toggleEmoji, showEmoji: _showEmoji, onTextChanged: _onTextChanged, onVoiceSent: _onVoiceSent),
+        ChatInputBar(controller: _msgCtrl, onSend: _send, onAttach: _sendImage, onEmoji: () => _toggleEmoji(!_showEmoji), onTextChanged: _onTextChanged, onVoiceSent: _onVoiceSent),
       ]),
     );
   }

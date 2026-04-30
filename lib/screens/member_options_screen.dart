@@ -20,7 +20,7 @@ class MemberOptionsScreen extends StatelessWidget {
         Center(child: Text(member['role']!, style: TextStyle(fontSize: 14, color: member['role'] == 'Propietario' ? SeendColors.primary : SeendColors.textSecondary))),
         const SizedBox(height: 32),
         if (!isOwner) ...[
-          ListTile(leading: Icon(isAdmin ? Icons.admin_panel_settings_off : Icons.admin_panel_settings, color: SeendColors.primary), title: Text(isAdmin ? 'Quitar administrador' : 'Hacer administrador'), onTap: () { Navigator.pop(context); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isAdmin ? 'Administrador removido' : 'Ahora es administrador'), backgroundColor: SeendColors.primary)); }),
+          ListTile(leading: Icon(isAdmin ? Icons.admin_panel_settings : Icons.admin_panel_settings, color: SeendColors.primary), title: Text(isAdmin ? 'Quitar administrador' : 'Hacer administrador'), onTap: () { Navigator.pop(context); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isAdmin ? 'Administrador removido' : 'Ahora es administrador'), backgroundColor: SeendColors.primary)); }),
           ListTile(leading: const Icon(Icons.remove_circle, color: SeendColors.error), title: const Text('Eliminar del grupo'), onTap: () {}),
           ListTile(leading: const Icon(Icons.block, color: Colors.red), title: const Text('Banear'), onTap: () {}),
         ],

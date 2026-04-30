@@ -15,11 +15,11 @@ class GroupInfoScreen extends StatefulWidget {
 
 class _GroupInfoScreenState extends State<GroupInfoScreen> {
   final List<Map<String, String>> _members = [
-    {'id': '1', 'name': 'Tú', 'role': 'Propietario', 'photo': null},
-    {'id': '2', 'name': 'María García', 'role': 'Administrador', 'photo': null},
-    {'id': '3', 'name': 'Carlos López', 'role': 'Miembro', 'photo': null},
-    {'id': '4', 'name': 'Laura Martínez', 'role': 'Miembro', 'photo': null},
-    {'id': '5', 'name': 'Pedro Sánchez', 'role': 'Miembro', 'photo': null},
+    {'id': '1', 'name': 'Tú', 'role': 'Propietario', 'photo': ''},
+    {'id': '2', 'name': 'María García', 'role': 'Administrador', 'photo': ''},
+    {'id': '3', 'name': 'Carlos López', 'role': 'Miembro', 'photo': ''},
+    {'id': '4', 'name': 'Laura Martínez', 'role': 'Miembro', 'photo': ''},
+    {'id': '5', 'name': 'Pedro Sánchez', 'role': 'Miembro', 'photo': ''},
   ];
 
   void _showMemberOptions(Map<String, String> member) {
