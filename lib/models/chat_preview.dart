@@ -1,3 +1,5 @@
+import 'message.dart';
+
 class ChatPreview {
   final String chatId; final String? userId; final String? groupId;
   final String displayName; final String? photoUrl;

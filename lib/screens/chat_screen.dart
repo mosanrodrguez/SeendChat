@@ -79,10 +79,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
     // Subir al servidor
     try {
-      final response = await ApiService.uploadFile('upload', bytes, 'photo_${DateTime.now().millisecondsSinceEpoch}.jpg');
+      // upload removido('upload', bytes, 'photo_${DateTime.now().millisecondsSinceEpoch}.jpg');
       if (response != null && response['url'] != null && mounted) {
         context.read<ChatProvider>().updateMessageStatus(msg.id, 'sent');
-        context.read<WebSocketProvider>().sendMessage(widget.userId, '', imageUrl: response['url']);
+        context.read<WebSocketProvider>().sendMessage(widget.userId, text);
       }
     } catch (_) {
       if (mounted) context.read<ChatProvider>().updateMessageStatus(msg.id, 'sent');
