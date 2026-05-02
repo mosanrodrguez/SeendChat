@@ -7,7 +7,6 @@ import '../config/colors.dart';
 import '../models/chat_preview.dart';
 import 'chat_screen.dart';
 import 'group_chat_screen.dart';
-import 'channel_chat_screen.dart';
 import 'contacts_screen.dart';
 import 'settings_screen.dart';
 import '../widgets/empty_state.dart';
@@ -55,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: chat.isLoading
             ? const Center(child: CircularProgressIndicator(color: SeendColors.primary))
             : chat.chats.isEmpty
-                ? const EmptyState(icon: Icons.chat_bubble_outline, title: 'No hay conversaciones', subtitle: 'Toca el botón para iniciar un nuevo chat')
+                ? const EmptyState(icon: Icons.chat_bubble_outline, title: 'No hay conversaciones', subtitle: 'Toca el botón + para iniciar un nuevo chat')
                 : ListView.builder(
                     physics: const AlwaysScrollableScrollPhysics(),
                     itemCount: chat.chats.length,
@@ -73,10 +72,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         onTap: () {
                           if (c.type == ChatType.direct) {
                             Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(userId: c.userId!, userName: c.displayName, userPhoto: c.photoUrl)));
-                          } else if (c.type == ChatType.group) {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => GroupChatScreen(groupId: c.groupId!, groupName: c.displayName)));
                           } else {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => ChannelChatScreen(channelId: c.channelId!, channelName: c.displayName)));
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => GroupChatScreen(groupId: c.groupId!, groupName: c.displayName)));
                           }
                         },
                       );
@@ -86,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: Container(
         height: 48,
         decoration: BoxDecoration(color: SeendColors.primary, borderRadius: BorderRadius.circular(24)),
-        child: Material(color: Colors.transparent, child: InkWell(borderRadius: BorderRadius.circular(24), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ContactsScreen())), child: const Padding(padding: EdgeInsets.symmetric(horizontal: 20), child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.edit, color: Colors.white, size: 20), SizedBox(width: 6), Text('Nuevo chat', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600))])))),
+        child: Material(color: Colors.transparent, child: InkWell(borderRadius: BorderRadius.circular(24), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ContactsScreen())), child: const Padding(padding: EdgeInsets.symmetric(horizontal: 20), child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.add, color: Colors.white, size: 20), SizedBox(width: 6), Text('Nuevo chat', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600))])))),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
