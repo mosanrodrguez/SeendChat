@@ -29,16 +29,16 @@ class AvatarWithBadge extends StatelessWidget {
           backgroundColor: SeendColors.primary,
           backgroundImage: photoUrl != null ? NetworkImage(photoUrl!) : null,
           child: photoUrl == null
-              ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?', style: TextStyle(color: Colors.white, fontSize: size * 0.4, fontWeight: FontWeight.bold))
+              ? Icon(type == ChatType.group ? Icons.groups : Icons.person, color: Colors.white, size: size * 0.5)
               : null,
         ),
-        if (type != ChatType.direct)
+        if (type == ChatType.group)
           Positioned(
             bottom: -2, right: -2,
             child: Container(
-              width: size * 0.38, height: size * 0.38,
-              decoration: BoxDecoration(color: type == ChatType.group ? SeendColors.primary : const Color(0xFF1B4BB5), shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 1.5)),
-              child: Icon(type == ChatType.group ? Icons.groups : Icons.campaign, color: Colors.white, size: size * 0.22),
+              width: size * 0.4, height: size * 0.4,
+              decoration: BoxDecoration(color: SeendColors.primary, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 1.5)),
+              child: Icon(Icons.groups, color: Colors.white, size: size * 0.22),
             ),
           ),
         if (showOnline && isOnline)

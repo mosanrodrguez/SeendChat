@@ -9,15 +9,7 @@ class ChatInputBar extends StatefulWidget {
   final Function(String)? onTextChanged;
   final Function(String)? onVoiceSent;
 
-  const ChatInputBar({
-    super.key,
-    required this.controller,
-    required this.onSend,
-    required this.onAttach,
-    required this.onEmoji,
-    this.onTextChanged,
-    this.onVoiceSent,
-  });
+  const ChatInputBar({super.key, required this.controller, required this.onSend, required this.onAttach, required this.onEmoji, this.onTextChanged, this.onVoiceSent});
 
   @override
   State<ChatInputBar> createState() => _ChatInputBarState();
@@ -26,29 +18,11 @@ class ChatInputBar extends StatefulWidget {
 class _ChatInputBarState extends State<ChatInputBar> {
   bool _isRecording = false;
   int _recordSeconds = 0;
-  double _dragOffset = 0;
-  bool _isCancelling = false;
+
   bool get _hasText => widget.controller.text.trim().isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
-    if (_isRecording) {
-      return GestureDetector(
-        onHorizontalDragUpdate: (d) => setState(() { _dragOffset += d.delta.dx; _isCancelling = _dragOffset < -80; }),
-        onHorizontalDragEnd: (_) {
-          if (_isCancelling) { setState(() { _isRecording = false; _recordSeconds = 0; }); return; }
-          final dur = _recordSeconds;
-          setState(() { _isRecording = false; _recordSeconds = 0; });
-          widget.onVoiceSent?.call('audio_${dur}s');
-        },
-        child: Container(height: 80, padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), color: _isCancelling ? Colors.red.withOpacity(0.1) : null, child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Text(_isCancelling ? 'Suelta para cancelar' : 'Desliza para cancelar', style: TextStyle(fontSize: 11, color: _isCancelling ? Colors.red : SeendColors.textSecondary)),
-          const SizedBox(height: 4),
-          Row(mainAxisAlignment: MainAxisAlignment.center, children: [const Icon(Icons.mic, color: SeendColors.error, size: 28), const SizedBox(width: 8), Text('0:${_recordSeconds.toString().padLeft(2, '0')}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)), const SizedBox(width: 8), Container(width: 100, height: 4, decoration: BoxDecoration(color: SeendColors.primary, borderRadius: BorderRadius.circular(2)))]),
-        ])),
-      );
-    }
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, border: Border(top: BorderSide(color: SeendColors.border, width: 0.5))),
@@ -57,9 +31,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
         Expanded(child: TextField(controller: widget.controller, maxLines: 4, minLines: 1, style: const TextStyle(fontSize: 14), decoration: InputDecoration(hintText: 'Mensaje', hintStyle: const TextStyle(fontSize: 14, color: SeendColors.textSecondary), border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none), filled: true, fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5), contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)), onChanged: (v) { setState(() {}); widget.onTextChanged?.call(v); })),
         const SizedBox(width: 4),
         IconButton(icon: const Icon(Icons.attach_file, size: 22, color: SeendColors.textSecondary), onPressed: widget.onAttach, padding: EdgeInsets.zero, constraints: const BoxConstraints(minWidth: 40, minHeight: 40)),
-        _hasText
-            ? Container(width: 40, height: 40, decoration: const BoxDecoration(color: SeendColors.primary, shape: BoxShape.circle), child: IconButton(icon: const Icon(Icons.send_rounded, size: 18, color: Colors.white), onPressed: widget.onSend, padding: EdgeInsets.zero))
-            : GestureDetector(onLongPressStart: (_) => setState(() { _isRecording = true; _recordSeconds = 0; }), onLongPressEnd: (_) { if (_isRecording) { final dur = _recordSeconds; setState(() { _isRecording = false; _recordSeconds = 0; }); widget.onVoiceSent?.call('audio_${dur}s'); } }, child: Container(width: 40, height: 40, decoration: const BoxDecoration(color: SeendColors.primary, shape: BoxShape.circle), child: const Icon(Icons.mic, size: 18, color: Colors.white))),
+        _hasText ? Container(width: 40, height: 40, decoration: const BoxDecoration(color: SeendColors.primary, shape: BoxShape.circle), child: IconButton(icon: const Icon(Icons.send_rounded, size: 18, color: Colors.white), onPressed: widget.onSend, padding: EdgeInsets.zero)) : Container(width: 40, height: 40, decoration: const BoxDecoration(color: SeendColors.primary, shape: BoxShape.circle), child: IconButton(icon: const Icon(Icons.mic, size: 18, color: Colors.white), onPressed: () {}, padding: EdgeInsets.zero)),
       ]),
     );
   }

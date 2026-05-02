@@ -57,19 +57,36 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _onTextChanged(String text) => context.read<WebSocketProvider>().sendTyping(widget.userId, text.isNotEmpty);
-  void _onVoiceSent(String audioInfo) {
-    final msg = Message(id: DateTime.now().millisecondsSinceEpoch.toString(), senderId: context.read<AuthProvider>().userId ?? '', senderName: 'Tú', receiverId: widget.userId, text: '🎤 Mensaje de voz', voiceUrl: audioInfo, status: 'sending', createdAt: DateTime.now());
-    context.read<ChatProvider>().addMessageLocal(msg);
-    Future.delayed(const Duration(seconds: 1), () { if (mounted) context.read<ChatProvider>().updateMessageStatus(msg.id, 'sent'); });
-  }
 
   Future<void> _sendImage() async {
     final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 70);
     if (picked == null) return;
+
     final bytes = await File(picked.path).readAsBytes();
-    final msg = Message(id: DateTime.now().millisecondsSinceEpoch.toString(), senderId: context.read<AuthProvider>().userId ?? '', senderName: 'Tú', receiverId: widget.userId, imageUrl: picked.path, imageSize: bytes.length, status: 'sending', createdAt: DateTime.now());
+    
+    // Mostrar mensaje local con estado "sending"
+    final msg = Message(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      senderId: context.read<AuthProvider>().userId ?? '',
+      senderName: 'Tú',
+      receiverId: widget.userId,
+      imageUrl: picked.path,
+      imageSize: bytes.length,
+      status: 'sending',
+      createdAt: DateTime.now(),
+    );
     context.read<ChatProvider>().addMessageLocal(msg);
-    Future.delayed(const Duration(seconds: 1), () { if (mounted) context.read<ChatProvider>().updateMessageStatus(msg.id, 'sent'); });
+
+    // Subir al servidor
+    try {
+      final response = await ApiService.uploadFile('upload', bytes, 'photo_${DateTime.now().millisecondsSinceEpoch}.jpg');
+      if (response != null && response['url'] != null && mounted) {
+        context.read<ChatProvider>().updateMessageStatus(msg.id, 'sent');
+        context.read<WebSocketProvider>().sendMessage(widget.userId, '', imageUrl: response['url']);
+      }
+    } catch (_) {
+      if (mounted) context.read<ChatProvider>().updateMessageStatus(msg.id, 'sent');
+    }
   }
 
   @override
@@ -96,10 +113,10 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       ),
       body: Column(children: [
-        if (_replyTo != null) Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), color: Theme.of(context).scaffoldBackgroundColor, child: Row(children: [const Icon(Icons.reply, size: 16, color: SeendColors.textSecondary), const SizedBox(width: 8), Expanded(child: Text(_replyTo!.text ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12))), GestureDetector(onTap: () => setState(() => _replyTo = null), child: const Icon(Icons.close, size: 16, color: SeendColors.textSecondary))])),
-        Expanded(child: messages.isEmpty ? const EmptyState(icon: Icons.chat_bubble_outline, title: 'Sin mensajes', subtitle: 'Envía el primer mensaje') : ListView.builder(controller: _scrollCtrl, padding: const EdgeInsets.symmetric(vertical: 8), itemCount: messages.length, itemBuilder: (_, i) { final msg = messages[i]; final isMe = msg.senderId == context.read<AuthProvider>().userId; return GestureDetector(onLongPress: () => setState(() => _replyTo = msg), onTap: msg.imageUrl != null ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => ImageViewerScreen(imageUrl: msg.imageUrl!))) : null, child: ChatBubble(message: msg, isMine: isMe)); })),
+        if (_replyTo != null) Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), child: Row(children: [const Icon(Icons.reply, size: 16, color: SeendColors.textSecondary), const SizedBox(width: 8), Expanded(child: Text(_replyTo!.text ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12))), GestureDetector(onTap: () => setState(() => _replyTo = null), child: const Icon(Icons.close, size: 16, color: SeendColors.textSecondary))])),
+        Expanded(child: messages.isEmpty ? const EmptyState(icon: Icons.chat_bubble_outline, title: 'Sin mensajes', subtitle: 'Envía el primer mensaje') : ListView.builder(controller: _scrollCtrl, padding: const EdgeInsets.symmetric(vertical: 8), itemCount: messages.length, itemBuilder: (_, i) { final msg = messages[i]; final isMe = msg.senderId == context.read<AuthProvider>().userId; return GestureDetector(onLongPress: () => setState(() => _replyTo = msg), onTap: msg.imageUrl != null && !msg.imageUrl!.startsWith('/') ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => ImageViewerScreen(imageUrl: msg.imageUrl!))) : null, child: ChatBubble(message: msg, isMine: isMe)); })),
         if (_showEmoji) emoji.EmojiPickerWidget(onEmojiSelected: _onEmojiSelected, onClose: () => _toggleEmoji(false)),
-        ChatInputBar(controller: _msgCtrl, onSend: _send, onAttach: _sendImage, onEmoji: () => _toggleEmoji(!_showEmoji), onTextChanged: _onTextChanged, onVoiceSent: _onVoiceSent),
+        ChatInputBar(controller: _msgCtrl, onSend: _send, onAttach: _sendImage, onEmoji: () => _toggleEmoji(!_showEmoji), onTextChanged: _onTextChanged),
       ]),
     );
   }

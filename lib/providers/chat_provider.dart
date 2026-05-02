@@ -27,44 +27,14 @@ class ChatProvider extends ChangeNotifier {
     } catch (_) {}
   }
 
-  // Chat individual/grupo: NO carga historial
   Future<List<Message>> loadMessages(String chatId, {bool isChannel = false}) async {
-    if (!isChannel) {
-      _messages[chatId] = [];
-      notifyListeners();
-      return [];
-    }
-    // Solo canales cargan historial
-    return loadChannelMessages(chatId);
+    _messages[chatId] = [];
+    notifyListeners();
+    return [];
   }
-
-  // Canal: carga últimos 10 mensajes
-  Future<List<Message>> loadChannelMessages(String channelId, {bool loadMore = false}) async {
-    if (!loadMore) _messages[channelId] = [];
-
-    try {
-      final page = loadMore ? (_messages[channelId]?.length ?? 0) : 0;
-      final response = await ApiService.get('messages/$channelId?page=$page&limit=10');
-      if (response is List && response.isNotEmpty) {
-        final msgs = response.map((m) => Message.fromJson(m)).toList();
-        if (loadMore) {
-          _messages[channelId] = [...msgs, ...(_messages[channelId] ?? [])];
-        } else {
-          _messages[channelId] = msgs;
-        }
-        _hasMore[channelId] = msgs.length >= 10;
-        notifyListeners();
-      } else {
-        _hasMore[channelId] = false;
-      }
-    } catch (_) {}
-    return _messages[channelId] ?? [];
-  }
-
-  bool hasMoreMessages(String channelId) => _hasMore[channelId] ?? false;
 
   void addMessageLocal(Message msg) {
-    final chatId = msg.isGroup == true ? (msg.groupId ?? msg.receiverId) : (msg.senderId == msg.receiverId ? msg.receiverId : msg.senderId);
+    final chatId = msg.senderId;
     _messages[chatId] = [...(_messages[chatId] ?? []), msg];
     LocalDB.saveMessage(msg);
     notifyListeners();

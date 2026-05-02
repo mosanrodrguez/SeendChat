@@ -1,89 +1,24 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
 
-class UserPresence {
-  final bool isOnline;
-  final bool isTyping;
-  final bool isRecording;
-  final DateTime lastSeen;
-
-  UserPresence({
-    required this.isOnline,
-    this.isTyping = false,
-    this.isRecording = false,
-    required this.lastSeen,
-  });
-}
+class UserPresence { final bool isOnline; final bool isTyping; final DateTime lastSeen;
+  UserPresence({required this.isOnline, this.isTyping = false, required this.lastSeen}); }
 
 class PresenceProvider extends ChangeNotifier {
   final Map<String, UserPresence> _presences = {};
   String _connectionStatus = 'connecting';
-  Timer? _pingTimer;
-
-  PresenceProvider() {
-    _startPing();
-  }
-
-  String get connectionStatus => _connectionStatus;
   bool get isOnline => _connectionStatus == 'online';
+  String get connectionStatus => _connectionStatus;
 
-  void _startPing() {
-    _pingTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
-      final online = await ApiService.isServerOnline();
-      _connectionStatus = online ? 'online' : 'offline';
-      notifyListeners();
-    });
-  }
-
+  void updateConnection(String status) { _connectionStatus = status; notifyListeners(); }
   UserPresence? getPresence(String userId) => _presences[userId];
-
-  void updatePresence(String userId, UserPresence presence) {
-    _presences[userId] = presence;
-    notifyListeners();
-  }
-
-  void setOnline(String userId, bool online) {
-    _presences[userId] = UserPresence(
-      isOnline: online,
-      lastSeen: online ? DateTime.now() : (_presences[userId]?.lastSeen ?? DateTime.now()),
-    );
-    notifyListeners();
-  }
-
-  void setTyping(String userId, bool typing) {
-    final current = _presences[userId];
-    if (current != null) {
-      _presences[userId] = UserPresence(
-        isOnline: current.isOnline,
-        isTyping: typing,
-        lastSeen: current.lastSeen,
-      );
-      notifyListeners();
-    }
-  }
+  void updatePresence(String userId, UserPresence presence) { _presences[userId] = presence; notifyListeners(); }
+  void setTyping(String userId, bool typing) { final c = _presences[userId]; if (c != null) { _presences[userId] = UserPresence(isOnline: c.isOnline, isTyping: typing, lastSeen: c.lastSeen); notifyListeners(); } }
 
   String getStatusText(String userId) {
-    final presence = _presences[userId];
-    if (presence == null) return '';
-    if (presence.isTyping) return 'Escribiendo...';
-    if (presence.isRecording) return 'Grabando audio...';
-    if (presence.isOnline) return 'En línea';
-
-    final now = DateTime.now();
-    final diff = now.difference(presence.lastSeen);
-
-    if (diff.inMinutes < 1) return 'Últ. vez ahora';
-    if (diff.inMinutes < 60) return 'Últ. vez hoy ${_formatTime(presence.lastSeen)}';
-    if (diff.inHours < 24) return 'Últ. vez ayer';
-    return 'Últ. vez ${presence.lastSeen.day}/${presence.lastSeen.month}/${presence.lastSeen.year.toString().substring(2)}';
-  }
-
-  String _formatTime(DateTime t) => '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
-
-  @override
-  void dispose() {
-    _pingTimer?.cancel();
-    super.dispose();
+    final p = _presences[userId]; if (p == null) return ''; if (p.isTyping) return 'Escribiendo...'; if (p.isOnline) return 'En línea';
+    final now = DateTime.now(); final diff = now.difference(p.lastSeen);
+    if (diff.inMinutes < 1) return 'Últ. vez ahora'; if (diff.inMinutes < 60) return 'Últ. vez hoy ${p.lastSeen.hour}:${p.lastSeen.minute.toString().padLeft(2, '0')}';
+    if (diff.inHours < 24) return 'Últ. vez ayer'; if (diff.inDays < 7) return 'Últ. vez hace ${diff.inDays} días';
+    return 'Últ. vez ${p.lastSeen.day}/${p.lastSeen.month}/${p.lastSeen.year.toString().substring(2)}';
   }
 }
