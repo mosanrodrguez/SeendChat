@@ -19,9 +19,12 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.16.0'
+          cache: false
       - run: flutter pub get
-      - name: Clean Gradle cache
-        run: flutter clean
+      - name: Clean everything
+        run: |
+          flutter clean
+          rm -rf ~/.gradle/caches/
       - run: flutter build apk --release
       - uses: softprops/action-gh-release@v1
         with:
