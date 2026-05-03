@@ -1,4 +1,4 @@
-name: Build APK
+name: Build & Release APK
 
 on:
   push:
@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -19,6 +21,28 @@ jobs:
           flutter-version: '3.16.0'
       - run: flutter pub get
       - run: flutter build apk --release
+      - uses: softprops/action-gh-release@v1
+        with:
+          name: "SeendChat v0.0.5 Beta - Build ${{ github.run_number }}"
+          tag_name: "v0.0.5-build-${{ github.run_number }}"
+          body: |
+            ## 📱 SeendChat v0.0.5 Beta
+            
+            **Build:** ${{ github.run_number }}
+            **Fecha:** ${{ github.event.head_commit.timestamp }}
+            
+            ### ✅ Funcionalidades
+            - Chats individuales y grupos
+            - Mensajes en tiempo real (WebSocket)
+            - Notificaciones push (FCM)
+            - Multimedia (fotos, videos, audio, archivos)
+            - Deep links (seend.nat.cu)
+            - Privacidad configurable
+            - Sin historial de chat
+            - Flat Design con tema oscuro
+          files: build/app/outputs/flutter-apk/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v4
         with:
           name: SeendChat-APK
