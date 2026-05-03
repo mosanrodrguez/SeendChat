@@ -19,7 +19,7 @@ android {
     sourceSets { main.java.srcDirs += 'src/main/kotlin' }
     defaultConfig {
         applicationId "com.seend.chat"
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion 34
         versionCode 1
         versionName "0.0.5 Beta"
