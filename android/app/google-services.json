@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "680038069774",
+    "project_id": "seend-35969",
+    "storage_bucket": "seend-35969.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:680038069774:android:6810ea9d92996b9c39ee5f",
+        "android_client_info": {
+          "package_name": "com.seend.chat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAL9G8ew8hsVwUZqqkD0wW9HoTbNGwOvco"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
