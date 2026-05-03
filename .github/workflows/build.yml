@@ -20,6 +20,8 @@ jobs:
         with:
           flutter-version: '3.16.0'
       - run: flutter pub get
+      - name: Clean Gradle cache
+        run: cd android && ./gradlew clean
       - run: flutter build apk --release
       - uses: softprops/action-gh-release@v1
         with:
@@ -27,10 +29,10 @@ jobs:
           tag_name: "v0.0.5-build-${{ github.run_number }}"
           body: |
             ## 📱 SeendChat v0.0.5 Beta
-            
+
             **Build:** ${{ github.run_number }}
             **Fecha:** ${{ github.event.head_commit.timestamp }}
-            
+
             ### ✅ Funcionalidades
             - Chats individuales y grupos
             - Mensajes en tiempo real (WebSocket)
